@@ -1,0 +1,27 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug cooccurrence.py (MEPC 77)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/cooccurrence.py",
+            "args": [
+                "--title",
+                "MEPC",
+                "--subtitle", 
+                "MEPC 77",
+                "--logging",
+                "log/logging.log",
+                "--text_extracted_folder",
+                "output/MEPC/MEPC 77"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "preLaunchTask": "create-output-dirs"  // 更新任务名称
+        }
+    ]
+}

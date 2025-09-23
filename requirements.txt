@@ -1,0 +1,19 @@
+# Data Analysis and Manipulation
+numpy
+scikit-learn
+
+# Network Analysis
+networkx
+python-louvain
+
+# Visualization
+matplotlib
+seaborn
+adjustText
+
+# Natural Language Processing (NLP)
+nltk
+gensim
+
+# Other
+openai

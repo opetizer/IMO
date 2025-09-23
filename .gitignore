@@ -1,0 +1,16 @@
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/tasks.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+data/
+output/
+log/

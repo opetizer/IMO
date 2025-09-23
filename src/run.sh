@@ -1,0 +1,23 @@
+#!/bin/sh
+
+title="MEPC"
+subtitle="MEPC 78"
+
+mkdir -p "./output/$title/$subtitle"
+
+echo "Running $title: $subtitle..."
+
+python src/parse_data.py \
+    --title "$title" \
+    --subtitle "$subtitle" \
+    --logging log/logging.log \
+&& \
+
+python src/cooccurrence.py \
+    --title "$title" \
+    --subtitle "$subtitle" \
+    --logging log/logging.log \
+    --text_extracted_folder "output/$title/$subtitle" \
+&& \
+
+echo "$title $subtitle done!"

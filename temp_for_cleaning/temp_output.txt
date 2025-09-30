@@ -1,0 +1,63 @@
+{
+  "summary": {
+    "text": "This document provides an overview of potential options for certification of Tank-to-Wake CH4 and N2O emissions and Cslip from engines energy converters inclusive of any aftertreatment technology Furthermore this document describes the benefits and drawbacks of different approaches",
+    "strategic_direction": [
+      3
+    ],
+    "output": [
+      3.2
+    ],
+    "action_to_be_taken": [
+      10
+    ],
+    "related_document": [
+      "MEPC.376(80)",
+      "MEPC 78/7/13",
+      "MEPC 80/7/4",
+      "MEPC 80/17",
+      "MEPC 81/7/4"
+    ]
+  },
+  "content": [
+    {
+      "paragraph": 1,
+      "text": "The development and introduction of a life cycle assessment LCA methodology to assess Well-to-Wake WtW GHG emissions from ships represents an important step to allow the incorporation of measures to reduce emissions from ships To this end future regulatory frameworks and relevant technical measures for reduction of GHG emissions from ships may incorporate the possibility to account for non-CO2 GHG Tank-to-Wake TtW emissions through introduction of default TtW emission factors associated to different energy conversion types and technologies"
+    },
+    {
+      "paragraph": 2,
+      "text": "With a view to promoting innovation development of improved energy converters with a lower non-CO2 GHG TtW footprint it is important to ensure that a route for demonstration of improved GHG performance compared to the default emission factors is considered in the relevant regulatory framework i e already as part of the Guidelines on life cycle GHG intensity of marine fuels LCA Guidelines adopted through resolution MEPC.376(80)"
+    },
+    {
+      "paragraph": 3,
+      "text": "With a view to ensuring the promotion of improved GHG performance technologies paragraph 10.5 of the LCA Guidelines allows for actual TtW emission factors for all fuel pathways provided that suitable verification and certification methodologies are available to allow for demonstration of such actual values"
+    },
+    {
+      "paragraph": 4,
+      "text": "As an initial attempt to identify the relevance of existing regulatory framework for the objective of measuring and demonstrating actual non-CO2 GHG values the Correspondence Group CG on Marine Fuel Life Cycle GHG Analysis preparing the LCA Guidelines identified the NOx Technical Code 2008 as a possible basis for the development of a specific procedure to determine the actual emission factors of CfN2O CfCH4 and Cslip through considering the proposal in document MEPC 78/7/13 Republic of Korea which received strong support as described in paragraph 63 of the final report of the CG document MEPC 80/7/4 Further in the above-mentioned paragraph the relationship between methane slip and engine load was mentioned"
+    },
+    {
+      "paragraph": 5,
+      "text": "This document is submitted in complement to document MEPC 81/7/4 Austria et al providing information on possible options for certification of TtW methane CH4 and nitrous oxide N2O emission factors with a short technical paper as set out in the annex to this document describing the benefits and drawbacks of different approaches"
+    },
+    {
+      "paragraph": 6,
+      "text": "As indicated in paragraph 10 of the LCA Guidelines actual emission factors have the aim to allow demonstration of superior GHG performance compared to the default emission factors subject to verification and certification by a third party The present document describes different methodologies possible to serve the purpose of third-party verification reflecting on different characteristic aspects of each approach"
+    },
+    {
+      "paragraph": 7,
+      "text": "In particular for TtW actual emission factors of CfCH4 CfN2O and Cslip it is important to take into consideration the relevance of a verification and certification methodology which incentivizes the development of improved energy conversion technologies with lower TtW or slippage GHG emission footprint Such a possibility will promote innovation and create a favourable framework for continuous development of energy conversion technologies"
+    },
+    {
+      "paragraph": 8,
+      "text": "Considering this need the stage of the current work of the CG on the further development of the LCA framework and its possible intersessional follow-up after MEPC 81 the present document intends to provide information on different advantages and disadvantages of different methodologies test bed or on-board testing based on a test-cycle approach onboard continuous measurements or other including existing reference standards and protocols that relate to each approach in support of further future assessment by the CG"
+    },
+    {
+      "paragraph": 9,
+      "text": "In addition to the elements related to the different methodologies for verification and certification the document in the annex includes a list of open questions that should be addressed with a view to further developing the framework for certification of energy converters for actual TtW CH4 and N2O emission factors The document in the annex was developed in the context of the European Sustainable Shipping Forum ESSF ESSF provides a platform for structural dialogue exchange of technical knowledge cooperation and coordination between the European Commission European Member States authorities and maritime transport stakeholders on issues pertaining to the sustainability of European maritime transport"
+    },
+    {
+      "paragraph": 10,
+      "text": "The Committee is invited to note the information in the annex of this document in support of and as a complement to document MEPC 81/7/4 and to include it as part of the documents to assist in the continuation of the work by the CG on the further development of the LCA framework"
+    }
+  ]
+}

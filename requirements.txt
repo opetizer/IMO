@@ -1,6 +1,8 @@
 # Data Analysis and Manipulation
 numpy
 scikit-learn
+openpyxl
+pymupdf
 
 # Network Analysis
 networkx

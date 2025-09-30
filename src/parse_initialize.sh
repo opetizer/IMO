@@ -1,7 +1,7 @@
 #!/bin/sh
 
 title="MEPC"
-subtitle="MEPC 78"
+subtitle="MEPC $1"
 
 mkdir -p "./output/$title/$subtitle"
 

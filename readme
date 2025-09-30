@@ -10,21 +10,38 @@
 
 ## 使用方法
 
-1. 克隆本仓库到本地：
-	```
-	git clone <仓库地址>
-	```
-2. 运行 `src/` 下的代码。
+1. 将会议数据放置在`data`文件夹下，结构如图所示：
+```
+data/
+└── conference_name/
+	├── session1/
+	│   ├── paper1.pdf
+	│   ├── paper2.pdf
+	│   └── ...
+	├── session2/
+	│   ├── paper1.pdf
+	│   ├── paper2.pdf
+	│   └── ...
+	└── ...
+```
+2. 在.sh文件中配置title和subtitle
+3. 使用`parse_initialize.sh <session>`调用api清洗指定会议的数据,得到放置在`output`文件夹下的结果。
+```
+output/
+└── conference_name/
+	├── session1/
+	│   ├── data.json
+	│   ├── word_freq.json
+	|   └── cooccurrence_graph.png
+	├── session2/
+	│   ├── data.json
+	│   ├── word_freq.json
+	|   └── cooccurrence_graph.png
+	└── ...
+```	
+4. 使用`consolidate.sh`整合同一个conference的数据，得到趋势分析结果。
 
 ## 依赖环境
 
-- Python 3.x
+- Python 3.10
 - 其他依赖请参考 `requirements.txt`
-
-## 贡献
-
-欢迎提交 issue 或 pull request 参与项目完善。
-
-## 联系方式
-
-如有问题，请联系项目维护者。

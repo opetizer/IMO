@@ -8,22 +8,22 @@ python src/consolidate.py \
 	--title "$TOPIC" \
 && \
 
-echo "Consolidation for $title done!"
+echo "Consolidation for topic $TOPIC done!"
 
 CSV_PATH="output/$TOPIC/trend_analysis.csv"
-OUTPUT_PATH="output/$TOPIC/keyword_trends.png"
-CHART_TITLE="Keyword Trends for $TOPIC Sessions"
-KEYWORDS="emission fuel ballast_water ghg carbon alternative_fuel energy_efficiency"
+OUTPUT_PATH="output/$TOPIC/keyword_trends_dashboard.png"
+CHART_TITLE_PREFIX="MEPC Keyword"
+TOP_N=10
 
-echo "Generating trend visualization..."
+echo "Generating trend visualization dashboard..."
 echo "Input CSV: $CSV_PATH"
-echo "Keywords: $KEYWORDS"
+echo "Top N per chart: $TOP_N"
 
 python src/visualize_trends.py \
     --csv_path "$CSV_PATH" \
     --output_path "$OUTPUT_PATH" \
-    --title "$CHART_TITLE" \
-    --keywords $KEYWORDS \
+    --title_prefix "$CHART_TITLE_PREFIX" \
+    --top_n $TOP_N \
 && \
 
-echo "Visualization done! Chart saved to $OUTPUT_PATH"
+echo "Visualization done! Dashboard chart saved to $OUTPUT_PATH"

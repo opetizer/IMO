@@ -75,7 +75,7 @@ def extract_text_from_pdf(file_path, logger):
     """Extracts all text content from a PDF file."""
     try:
         with fitz.open(file_path) as doc:
-            return "".join(page.get_text() for page in doc)
+            return " ".join(page.get_text() for page in doc)
     except Exception as e:
         logger.warning(f"Error processing file {file_path}: {e}")
         return ""

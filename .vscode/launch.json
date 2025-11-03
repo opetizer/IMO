@@ -2,6 +2,26 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Debug parse_data.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/parse_data.py",
+            "args": [
+                "--title",
+                "MEPC",
+                "--subtitle", 
+                "MEPC 77",
+                "--logging",
+                "log/logging.log",
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "preLaunchTask": "parse_data"
+        },
+        {
             "name": "Debug cooccurrence.py (MEPC 77)",
             "type": "debugpy",
             "request": "launch",
@@ -10,18 +30,24 @@
                 "--title",
                 "MEPC",
                 "--subtitle", 
-                "MEPC 77",
+                "MEPC77",
                 "--logging",
                 "log/logging.log",
                 "--text_extracted_folder",
-                "output/MEPC/MEPC 77"
+                "output/MEPC/MEPC 77",
+                "--countries",
+                "",
+                "--start_date",
+                "",
+                "--end_date",
+                ""
             ],
             "console": "integratedTerminal",
             "justMyCode": false,
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             },
-            "preLaunchTask": "create-output-dirs"  // 更新任务名称
+            "preLaunchTask": "cooccurence"
         }
     ]
 }

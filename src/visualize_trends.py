@@ -3,53 +3,23 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 import argparse
+# 新增：用于数据归一化的库
+from sklearn.preprocessing import MinMaxScaler
 
 # --- Argument Parser Setup ---
-parser = argparse.ArgumentParser(description="Visualize keyword trends from a consolidated CSV file.")
-parser.add_argument('--csv_path', type=str, required=True, help="Path to the input trend_analysis.csv file.")
-parser.add_argument('--output_path', type=str, required=True, help="Path to save the output trend chart PNG file.")
-parser.add_argument('--top_n', type=int, default=10, help="Number of keywords to plot for each category.")
-parser.add_argument('--title_prefix', type=str, default="Keyword", help="Prefix for the chart title.")
+parser = argparse.ArgumentParser(description="Visualize specific keyword trends from a consolidated CSV file.")
+parser.add_argument('--csv_path', type=str, required=True, 
+                    help="Path to the input trend_analysis.csv file.")
+parser.add_argument('--output_path', type=str, required=True, 
+                    help="Path to save the output trend chart PNG file.")
+# --- 修改：改为接受一个关键词列表 ---
+parser.add_argument('--keywords', type=str, required=True, nargs='+',
+                    help="A list of specific keywords to plot (e.g., ghg_emission ballast_water).")
+# --- 新增：归一化选项 ---
+parser.add_argument('--normalize', action='store_true',
+                    help="Normalize each keyword's trend to a 0-1 scale to compare trajectories.")
+
 args = parser.parse_args()
-
-def plot_trends(df, keywords, title, ax):
-    """
-    Helper function to plot trends for a given list of keywords on a specific subplot axis.
-    """
-    if not keywords:
-        ax.text(0.5, 0.5, 'No keywords to display.', ha='center', va='center', fontsize=12)
-        ax.set_title(title, fontsize=16, pad=15)
-        ax.axis('off')
-        return
-        
-    # Exclude metric columns from plotting data
-    metric_cols = ['total_score', 'change_std_dev', 'abs_change_first_last']
-    plot_cols = [col for col in df.columns if col not in metric_cols]
-    
-    # Ensure all selected keywords exist in the dataframe index
-    available_keywords = [kw for kw in keywords if kw in df.index]
-    if not available_keywords:
-        print(f"Warning: None of the keywords for '{title}' found in the data.")
-        return
-
-    df_plot = df.loc[available_keywords, plot_cols]
-    df_transposed = df_plot.T
-    
-    for keyword in df_transposed.columns:
-        ax.plot(df_transposed.index, df_transposed[keyword], marker='o', linestyle='-', label=keyword)
-
-    ax.set_title(title, fontsize=16, pad=15)
-    ax.set_xlabel('Session', fontsize=12)
-    ax.set_ylabel('TF-IDF Score', fontsize=12)
-    
-    # --- FIX APPLIED HERE ---
-    # The 'ha' parameter is not valid in tick_params. 
-    # Setting rotation on the labels themselves is the correct way.
-    ax.tick_params(axis='x', labelsize=10)
-    plt.setp(ax.get_xticklabels(), rotation=45, ha="right")
-
-    ax.legend(title='Keywords', fontsize='small')
-    ax.grid(True, which='both', linestyle='--', linewidth=0.5)
 
 def main():
     try:
@@ -59,31 +29,85 @@ def main():
         print(f"Error: The file was not found at {args.csv_path}")
         return
 
-    top_n = args.top_n
+    # --- 1. 筛选数据 ---
     
-    # --- Identify Top N Keywords for Each Category ---
-    top_freq_keywords = df.sort_values(by='total_score', ascending=False).head(top_n).index.tolist()
-    top_volatile_keywords = df.sort_values(by='change_std_dev', ascending=False).head(top_n).index.tolist()
-    top_change_keywords = df.sort_values(by='abs_change_first_last', ascending=False).head(top_n).index.tolist()
+    # 识别出哪些列是会话 (即，不是 consolidate.py 添加的指标列)
+    #
+    metric_cols = ['total_score', 'change_std_dev', 'abs_change_first_last']
+    session_cols = [col for col in df.columns if col not in metric_cols]
+    
+    # 检查用户请求的关键词哪些在数据中
+    available_keywords = [kw for kw in args.keywords if kw in df.index]
+    missing_keywords = [kw for kw in args.keywords if kw not in df.index]
+    
+    if not available_keywords:
+        print(f"Error: None of the requested keywords ({args.keywords}) were found in the file's index.")
+        return
+        
+    if missing_keywords:
+        print(f"Warning: The following keywords were not found and will be skipped: {missing_keywords}")
+    
+    print(f"Plotting trends for: {available_keywords}")
 
-    print(f"\n--- Top {top_n} Keywords ---")
-    print(f"By total frequency: {top_freq_keywords}")
-    print(f"By volatility (std dev): {top_volatile_keywords}")
-    print(f"By trend change (first-last): {top_change_keywords}")
+    # 提取我们感兴趣的关键词和会话列
+    df_plot = df.loc[available_keywords, session_cols]
 
-    # --- Create Subplots ---
+    # --- 2. 归一化 (如果用户请求) ---
+    if args.normalize:
+        print("Normalizing keyword trends to 0-1 scale...")
+        # 我们需要对每一行（每个关键词）进行归一化
+        # MinMaxScaler 是按列工作的，所以我们先转置(T)，再归一化，然后再转置(T)回来
+        scaler = MinMaxScaler()
+        
+        # 转置: 关键词变为列
+        df_T = df_plot.T 
+        
+        # 归一化 (fit_transform)
+        scaled_data = scaler.fit_transform(df_T)
+        
+        # 将归一化后的数据重新放回DataFrame
+        df_scaled_T = pd.DataFrame(scaled_data, index=df_T.index, columns=df_T.columns)
+        
+        # 再次转置，使关键词恢复为行
+        df_plot = df_scaled_T.T
+        
+        # 更新图表标签
+        plot_title = f'Normalized Trend Analysis for Selected Keywords (0-1 Scale)'
+        y_label = 'Normalized Score (0-1 Scale)'
+    else:
+        # 保持原始值
+        plot_title = 'Trend Analysis for Selected Keywords (Raw TF-IDF Score)'
+        y_label = 'TF-IDF Score'
+
+    # --- 3. 绘图 (单一图表) ---
     sns.set_theme(style="whitegrid", palette="pastel")
-    fig, axes = plt.subplots(3, 1, figsize=(16, 24))
-    fig.suptitle(f'{args.title_prefix} Trends Analysis (Top {top_n})', fontsize=24, y=0.96)
+    # 创建一个更宽的单一图表
+    plt.figure(figsize=(16, 8)) 
+    
+    # 转置DataFrame以便绘图 (会话 session 成为 x 轴)
+    df_transposed = df_plot.T
+    
+    # 为每个关键词（现在是列）绘制一条线
+    for keyword in df_transposed.columns:
+        plt.plot(df_transposed.index, df_transposed[keyword], marker='o', linestyle='-', label=keyword)
 
-    # --- Plot on each subplot ---
-    plot_trends(df, top_freq_keywords, f'Top {top_n} Keywords by Total Frequency', axes[0])
-    plot_trends(df, top_volatile_keywords, f'Top {top_n} Most Volatile Keywords (by Std Dev)', axes[1])
-    plot_trends(df, top_change_keywords, f'Top {top_n} Keywords by Trend Change (First to Last Session)', axes[2])
+    plt.title(plot_title, fontsize=20, pad=20)
+    plt.xlabel('Session', fontsize=12)
+    plt.ylabel(y_label, fontsize=12)
+    
+    # 设置 x 轴刻度的旋转
+    ax = plt.gca() # 获取当前坐标轴
+    ax.tick_params(axis='x', labelsize=10)
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right")
 
-    plt.tight_layout(rect=[0, 0, 1, 0.95]) # Adjust layout for the main title
+    # 将图例放到图表外部，防止遮挡
+    plt.legend(title='Keywords', fontsize='medium', bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
 
-    # --- Save the Figure ---
+    # 调整布局，为图例腾出空间
+    plt.tight_layout(rect=[0, 0, 0.85, 1]) 
+
+    # --- 4. 保存图表 ---
     output_dir = os.path.dirname(args.output_path)
     if output_dir and not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -92,8 +116,7 @@ def main():
     
     print("-" * 30)
     print(f"Trend visualization complete!")
-    print(f"Dashboard chart saved to: {args.output_path}")
+    print(f"Chart saved to: {args.output_path}")
 
 if __name__ == "__main__":
     main()
-

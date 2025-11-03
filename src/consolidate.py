@@ -15,11 +15,7 @@ def consolidate(base_path, output_csv_path):
         all_data = {}
         print(f"Starting consolidation from base path: {base_path}")
 
-        # 获取所有子文件夹并进行自然排序
-        # Get all subdirectories and sort them naturally
         dir_list = os.listdir(base_path)
-        # 筛选掉非目录文件（例如之前生成的CSV文件）
-        # Filter out non-directory files (e.g., previously generated CSV files)
         dir_list = [d for d in dir_list if os.path.isdir(os.path.join(base_path, d))]
         dir_list.sort(key=lambda x: int(re.search(r'\d+', x).group()) if re.search(r'\d+', x) else -1)
 
@@ -42,38 +38,14 @@ def consolidate(base_path, output_csv_path):
 
         df = pd.DataFrame(all_data)
         df.fillna(0, inplace=True)
-        
-        # --- 新增的趋势分析逻辑 ---
-        # --- New logic for Trend Analysis ---
 
         # 1. 计算总分 (高频词)
-        # 1. Calculate Total Score (High Frequency)
         df['total_score'] = df.sum(axis=1)
         
         # 2. 计算变化指标
-        # 2. Calculate Change Metrics
-        # 仅使用会议数据列进行计算
-        # Use only session columns for calculation
         session_columns = [col for col in df.columns if col != 'total_score']
-        
-        # 使用标准差衡量波动性
-        # Standard Deviation as a measure of volatility
-        df['change_std_dev'] = df[session_columns].std(axis=1)
-
-        # 计算第一次和最后一次会议的绝对变化
-        # Absolute change between the first and last session
-        if len(session_columns) > 1:
-            df['abs_change_first_last'] = (df[session_columns[-1]] - df[session_columns[0]]).abs()
-        else:
-            df['abs_change_first_last'] = 0.0
-
-        # 按总分排序，使最重要的关键词排在前面
-        # Sort by total score to keep the most important keywords at the top
         df.sort_values(by='total_score', ascending=False, inplace=True)
-        
-        # 调整列顺序以便查看
-        # Reorder columns for clarity
-        cols_order = ['total_score', 'change_std_dev', 'abs_change_first_last'] + session_columns
+        cols_order = ['total_score'] + session_columns
         df = df[cols_order]
 
         df.to_csv(output_csv_path, encoding='utf-8-sig')
@@ -84,12 +56,6 @@ def consolidate(base_path, output_csv_path):
         
         print("\n--- Top 10 Keywords by Total Frequency ---")
         print(df.head(10))
-
-        print("\n--- Top 10 Keywords by Largest Change (Standard Deviation) ---")
-        print(df.sort_values(by='change_std_dev', ascending=False).head(10))
-        
-        print("\n--- Top 10 Keywords by Absolute Change (First to Last Session) ---")
-        print(df.sort_values(by='abs_change_first_last', ascending=False).head(10))
 
 
     except FileNotFoundError:

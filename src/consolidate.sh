@@ -20,10 +20,9 @@ echo "Input CSV: $CSV_PATH"
 echo "Top N per chart: $TOP_N"
 
 python src/visualize_trends.py \
-    --csv_path "$CSV_PATH" \
-    --output_path "$OUTPUT_PATH" \
-    --title_prefix "$CHART_TITLE_PREFIX" \
-    --top_n $TOP_N \
+    --csv_path "output/MEPC/trend_analysis.csv" \
+    --output_path "output/MEPC/keyword_trends.png" \
+    --keywords ghg lng oil gas fuel carbon_intensity ghg_intensity ghg_reduction \
 && \
 
 echo "Visualization done! Dashboard chart saved to $OUTPUT_PATH"

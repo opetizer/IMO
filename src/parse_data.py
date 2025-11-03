@@ -132,13 +132,14 @@ def process_files(data_folder, files_to_process, logger):
         llm_api_clean(temp_input_path, temp_output_path)
         
         # 4. Read and parse the structured data from the API's output
-        structured_data = parse_cleaned_json(temp_output_path, logger)
+        # structured_data = parse_cleaned_json(temp_output_path, logger)
+        with open(temp_output_path, 'r', encoding='utf-8') as f:
+            structured_data = f.read()
         
         # 5. Combine metadata with cleaned data
         entry = {
             **file_info,
-            'summary': structured_data.get('summary', {}),
-            'content': structured_data.get('content', [])
+            'content': structured_data,
         }
         database.append(entry)
 

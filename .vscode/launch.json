@@ -10,7 +10,7 @@
                 "--title",
                 "MEPC",
                 "--subtitle", 
-                "MEPC 77",
+                "MEPC 78",
                 "--logging",
                 "log/logging.log",
             ],

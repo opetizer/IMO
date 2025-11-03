@@ -41,64 +41,54 @@ def llm_api_clean(input_path, output_path, api_key = API_KEY, base_url = BASE_UR
     # 将原来的长 prompt 分为 system 指令和 user 输入，这是标准的 API 格式
     # 这是在Python代码中使用的版本
     system_prompt = ("""
-    You are an expert editor specializing in cleaning and formatting transcripts of official meeting records. 
+You are an expert document parsing AI, specializing in official documents from the International Maritime Organization (IMO), such as those for the Marine Environment Protection Committee (MEPC).
 
-    Your primary goal is to enhance readability by removing conversational noise and metadata, while strictly preserving the core content and meaning of the discussion.
+Your task is to receive the pre-cleaned text of **any** such document and convert it into a single, structured JSON object. You must **dynamically** find the information, not assume pre-set values.
 
-    Please adhere strictly to the following rules:
+**Instructions:**
 
-    1. Thoroughly comprehend the entire document. Your analysis should go beyond keyword searching to a deep understanding of the text.
+1.  **Extract Metadata:** Dynamically parse the document header to find key metadata. If an item is not present, return `null`.
+2.  **Extract Standard Sections:** Locate and extract the full text content for common logical sections (e.g., `Executive summary`, `Introduction`, `Action requested...`, `ANNEX`). If a section is not found, return `null`.
+3.  **Reconstruct All Tables:** This is your most critical task.
+    * Scan the entire document (especially any `ANNEX` sections) to locate **all** content that is formatted as a table.
+    * These tables are often broken across lines and pages in the raw text.
+    * You must reconstruct **each** table you find into a clean, well-formatted **Markdown string**.
+    * Capture each table as an object within the `extracted_tables` array.
 
-    2. Identify and extract all key information. This includes:
+You must output **only** the completed JSON object based on the format below. Do not add any extra explanations or comments.
 
-    - Facts: Verifiable statements and objective information.
-
-    - Viewpoints: Opinions, positions, and arguments.
-
-    - Data: Any numerical figures and statistics.
-
-    3. Locate and extract the specific 'SUMMARY' section. This section may be explicitly titled "SUMMARY" or be identifiable as an executive summary or abstract.
-
-    4. Process and clean the extracted text. Before generating the final output, process all the textual content you have extracted by removing the following categories of words and phrases:
-
-    - Adverbs (e.g., fully, carefully, however, therefore, very, also).
-
-    - Conjunctions (e.g., and, but, or, because, so).
-
-    - Temporal Expressions, including all specific dates (e.g., 22 October 2021, next week) and times (e.g., at 5 PM, in the morning).
-    
-    - Filler Words (e.g., well, you know, like, I mean).
-                     
-    - Punctuation Marks (e.g., commas, periods, colons, semicolons, question marks, exclamation marks, parentheses, brackets, dashes, and ellipses).
-
-    5. Structure the extracted information into a JSON format. The JSON output should conform to the following schema:
-
-    - A root object.
-
-    - This object must contain a key named "summary" whose value is an object containing the entire text and structured details found in the document's summary section.
-
-    - The "summary" object must contain keys as follows, and each key must have type as specified:
-    
-    - "text": A string, containing the full text of the summary section after cleaning.
-
-    - "strategic_direction": A list of numbers, representing the strategic direction of the meeting, if 'not applicable', return empty list.
-
-    - "output": A list of numbers, each representing a key output, if 'not applicable', return empty list.
-
-    - "action_to_be_taken": A list of numbers, refering to paragraph in the content, if 'not applicable', return empty list.
-
-    - "related_document": A list of strings, divided by semicolon, comma or 'and', each being a document reference, remove 'resolution' in the result.
-    
-    - This object must also contain a key named "content" whose value is an array of objects.
-
-    - Each object within the "content" array represents a paragraph from the main body of the document and must have two keys:
-
-    - "paragraph": An integer representing the paragraph number (e.g., 1, 2, 3...).
-
-    - "text": A string containing the full text of that paragraph.
-
-    Your final output should be a single, well-formed JSON object that accurately reflects the document's summary and paragraph-by-paragraph content.
-
+**Output JSON Format:**
+```json
+{
+"metadata": {
+    "document_id": "[Extract from header, e.g., 'MEPC 78/3/1' or 'MEPC 80/INF.2']",
+    "session": "[Extract from header, e.g., '78th session' or '80th session']",
+    "agenda_item": "[Extract from header, e.g., '3' or null if not found]",
+    "date": "[Extract from header, e.g., '26 January 2022']",
+    "title": "[Extract the main title, e.g., 'CONSIDERATION AND ADOPTION OF AMENDMENTS...']",
+    "subject": "[Extract the secondary title or subject, e.g., 'Draft amendments to MARPOL Annex II...']",
+    "submitted_by": "[Extract the author/submitter, e.g., 'Note by the Secretariat' or a specific country]"
+},
+"sections": {
+    "summary": "[Extract text following 'Executive summary:', or 'SUMMARY', or null if not found]",
+    "introduction": "[Extract text following the 'Introduction' heading, or null if not found]",
+    "action_requested": "[Extract text following 'Action requested of the Committee' (or similar heading), or null if not found]",
+    "annex_content": "[Extract all general text content found under the 'ANNEX' heading, *excluding* the tables themselves which are handled below. Null if no annex text.]"
+},
+"extracted_tables": [
+    {
+    "table_title": "[Extract the title for the first table found, e.g., 'Table 1 - Proposed Amendments']",
+    "source_section": "[Identify where the table was found, e.g., 'ANNEX' or 'Body']",
+    "markdown_content": "[The first table, fully reconstructed as a clean Markdown string]"
+    },
+    {
+    "table_title": "[Extract the title for the second table found, e.g., 'Table A - Bioaccumulation']",
+    "source_section": "ANNEX",
+    "markdown_content": "[The second table, fully reconstructed as a clean Markdown string]"
+    }
+]
+}
+```
     """
     )
     
@@ -125,7 +115,7 @@ def llm_api_clean(input_path, output_path, api_key = API_KEY, base_url = BASE_UR
     except Exception as e:
         print(f"调用API时发生错误: {e}")
         # 发生错误时，写入一个空的JSON结构，以防下游任务中断
-        cleaned_text = json.dumps({"summary": {"text": ""}, "content": []})
+        cleaned_text = json.dumps({})
 
 
     # 去除可能的<think>...</think>标签（一些模型可能会在内部思考过程中产生）

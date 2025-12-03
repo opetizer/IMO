@@ -12,6 +12,7 @@ python-louvain
 matplotlib
 seaborn
 adjustText
+plotly
 
 # Natural Language Processing (NLP)
 nltk

@@ -11,6 +11,8 @@ __pycache__/
 *.pyo
 *.pyd
 
+*.html
+
 data/
 output/
 log/

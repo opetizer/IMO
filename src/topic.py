@@ -16,7 +16,10 @@ from gensim.models import Phrases, LdaModel
 from nltk.corpus import wordnet, stopwords
 from nltk.stem import WordNetLemmatizer
 
-# --- Setup: Argument Parser, Logger, Stopwords (Copied from cooccurrence.py) ---
+# --- 引入新的数据读取模块 ---
+from json_read import load_data
+
+# --- Setup: Argument Parser, Logger, Stopwords ---
 
 parser = argparse.ArgumentParser(description="Perform Topic Modeling on MEPC documents.")
 parser.add_argument('--title', type=str, required=True)
@@ -73,6 +76,8 @@ def get_wordnet_pos(treebank_tag):
     else: return wordnet.NOUN
 
 def lemmatizing_tokenizer(text):
+    if not isinstance(text, str):
+        return []
     tagged_tokens = nltk.pos_tag(nltk.word_tokenize(text))
     lemmas = []
     for word, tag in tagged_tokens:
@@ -89,10 +94,23 @@ def lemmatizing_tokenizer(text):
 def main():
     download_nltk_data()
     
-    # --- Step 1: Load, Filter, and Preprocess Data (Re-used from cooccurrence.py) ---
+    # --- Step 1: Load and Filter Data using json_read ---
     logger.info("--- Step 1: Loading and Filtering Documents ---")
-    documents_metadata = [] # Store text along with metadata
+    
+    if not os.path.exists(json_file_path):
+        logger.error(f"data.json not found in folder: {text_folder}")
+        return
 
+    # 使用 json_read 加载并处理数据
+    df = load_data(json_file_path)
+    
+    if df.empty:
+        logger.warning("Loaded DataFrame is empty. Exiting.")
+        return
+
+    # --- Apply Filters ---
+    
+    # 1. Date Filter
     try:
         start_date_obj = datetime.strptime(args.start_date, '%Y-%m-%d') if args.start_date else None
         end_date_obj = datetime.strptime(args.end_date, '%Y-%m-%d') if args.end_date else None
@@ -100,56 +118,62 @@ def main():
         logger.error("Invalid date format. Please use YYYY-MM-DD.")
         return
 
-    countries_to_check = [c.lower() for c in args.countries] if args.countries else None
-    logger.info(f"Applying filters - Countries: {args.countries}, Start Date: {args.start_date}, End Date: {args.end_date}")
+    if start_date_obj or end_date_obj:
+        # Convert DataFrame 'Date' to datetime objects for filtering
+        # Assuming format in JSON is 'DD/MM/YYYY' or similar. 
+        # But data.json might contain raw strings like '22 November 2021'.
+        # For simplicity, we try parsing; if fail, we skip date filtering or handle carefully.
+        # json_read keeps 'Date' as string.
+        
+        # Helper to parse date safely
+        def parse_date_safe(d_str):
+            try:
+                return datetime.strptime(d_str, '%d/%m/%Y')
+            except (ValueError, TypeError):
+                return None
+                
+        df['dt_obj'] = df['Date'].apply(parse_date_safe)
+        
+        if start_date_obj:
+            df = df[df['dt_obj'] >= start_date_obj]
+        if end_date_obj:
+            df = df[df['dt_obj'] <= end_date_obj]
 
-    if not os.path.exists(json_file_path):
-        logger.error(f"data.json not found in folder: {text_folder}")
-        return
-
-    with open(json_file_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-        for file_content in data:
-            # Apply filters
-            if countries_to_check:
-                originator_str = file_content.get('Originator', '').lower()
-                if not any(country in originator_str for country in countries_to_check):
-                    continue
-            
-            item_date_str = file_content.get('Date')
-            if (start_date_obj or end_date_obj) and item_date_str:
-                try:
-                    item_date_obj = datetime.strptime(item_date_str, '%d/%m/%Y')
-                    if (start_date_obj and item_date_obj < start_date_obj) or \
-                       (end_date_obj and item_date_obj > end_date_obj):
-                        continue
-                except ValueError:
-                    logger.warning(f"Could not parse date '{item_date_str}' for document {file_content.get('Symbol')}")
-                    continue
-
-            # Extract text (excluding last paragraph)
-            content_list = file_content.get('content')
-            if not content_list: continue
-            
-            text = " ".join(item['text'] for item in content_list[:-1])
-            if not text: continue
-            
-            documents_metadata.append({
-                "file_name": file_content.get("file_name", "N/A"),
-                "Date": file_content.get("Date", "N/A"),
-                "Originator": file_content.get("Originator", "N/A"),
-                "text": text
-            })
-
-    logger.info(f"Loaded and filtered {len(documents_metadata)} documents.")
-    if not documents_metadata:
+    # 2. Country Filter
+    if args.countries:
+        countries_to_check = [c.lower() for c in args.countries]
+        # Check if Originator contains any of the countries
+        # Originator might be NaN
+        df['Originator'] = df['Originator'].fillna('')
+        mask = df['Originator'].str.lower().apply(lambda x: any(c in x for c in countries_to_check))
+        df = df[mask]
+        
+    logger.info(f"Loaded and filtered {len(df)} documents.")
+    
+    # Ensure full_text is not empty
+    df = df[df['full_text'].notna() & (df['full_text'].str.strip() != '')]
+    
+    if df.empty:
         logger.warning("No documents left after filtering. Exiting.")
         return
 
+    documents_metadata = df.to_dict('records') # Convert back to list of dicts for iteration
+
+    # --- Step 2: Tokenizing and Phrase Detection ---
     logger.info("--- Step 2: Tokenizing and Phrase Detection ---")
-    all_docs_text = [doc['text'] for doc in documents_metadata]
+    
+    all_docs_text = [doc['full_text'] for doc in documents_metadata]
     all_tokens = [lemmatizing_tokenizer(doc) for doc in all_docs_text]
     
+    # Remove empty token lists
+    valid_indices = [i for i, tokens in enumerate(all_tokens) if tokens]
+    all_tokens = [all_tokens[i] for i in valid_indices]
+    documents_metadata = [documents_metadata[i] for i in valid_indices]
+    
+    if not all_tokens:
+        logger.error("No valid tokens found after preprocessing.")
+        return
+
     phrases = Phrases(all_tokens, min_count=2, threshold=4)
     tokens_with_bigrams = [phrases[doc] for doc in all_tokens]
     
@@ -158,18 +182,16 @@ def main():
     # --- Step 3: Topic Modeling with LDA ---
     logger.info("--- Step 3: Building Dictionary and Corpus for LDA ---")
     
-    # Create Dictionary
     id2word = corpora.Dictionary(tokens_with_bigrams)
-    # Filter out extremes
-    id2word.filter_extremes(no_below=7, no_above=0.5)
-    # Create Corpus: Term Document Frequency
+    # Filter extremes
+    id2word.filter_extremes(no_below=3, no_above=0.6) # Adjusted slightly for smaller datasets
+    
     corpus = [id2word.doc2bow(text) for text in tokens_with_bigrams]
 
     logger.info(f"Dictionary contains {len(id2word)} unique tokens. Corpus contains {len(corpus)} documents.")
 
     logger.info(f"--- Step 4: Training LDA Topic Model with {args.num_topics} topics ---")
     
-    # Build LDA model
     lda_model = LdaModel(corpus=corpus,
                          id2word=id2word,
                          num_topics=args.num_topics,
@@ -183,9 +205,12 @@ def main():
     logger.info("LDA model training complete.")
 
     # --- Step 5: Saving Outputs ---
-    logger.info("--- Step 5: Saving topic summary and document distributions ---")
+    
+    # 确保输出目录存在
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
 
-    # 1. Save the topics summary
+    # 1. Save topics summary
     topics_summary_path = os.path.join(output_path, 'topics_summary.txt')
     with open(topics_summary_path, 'w', encoding='utf-8') as f:
         f.write(f"LDA Model Results: {args.num_topics} Topics\n")
@@ -195,67 +220,65 @@ def main():
             f.write(f"Topic #{topic[0]}: \n{topic[1]}\n\n")
     logger.info(f"Topics summary saved to: {topics_summary_path}")
 
-    # 2. 生成并保存为表格 (CSV 文件)
+    # 2. Save topics as CSV
     csv_path = os.path.join(output_path, 'topics_table.csv')
-    logger.info(f"正在将主题结果保存为表格: {csv_path}")
-    
     try:
         with open(csv_path, 'w', encoding='utf-8') as f:
-            f.write("Topics")
-            for i in range(args.num_topics):
+            f.write("Topic_ID")
+            for i in range(10): # Top 10 words
                 f.write(f",Word_{i+1},Probability_{i+1}")
             f.write("\n")
             for topic in topics:
                 f.write(f"{topic[0]}")
-                for word_prob in topic[1].split(" + "):
-                    prob, word = word_prob.split("*")
-                    word = word.strip().strip('"')
-                    f.write(f",{word},{prob}")
+                # Parse "0.050*word + 0.030*word2..."
+                parts = topic[1].split("+")
+                for part in parts:
+                    if "*" in part:
+                        prob, word = part.split("*")
+                        word = word.strip().strip('"')
+                        f.write(f",{word},{prob.strip()}")
                 f.write("\n")
-        logger.info(f"主题表格已保存至: {csv_path}")
-
     except Exception as e:
-        logger.error(f"保存 CSV 表格时出错: {e}")
+        logger.error(f"Error saving topics table: {e}")
 
-    # 2. Save the document-topic distribution to CSV
+    # 3. Save document-topic distribution
     topic_dist_list = []
     for i, doc_corpus in enumerate(corpus):
         doc_topics = lda_model.get_document_topics(doc_corpus, minimum_probability=0)
         
-        # Find the dominant topic
-        dominant_topic = sorted(doc_topics, key=lambda x: x[1], reverse=True)[0][0]
+        # Sort to find dominant topic
+        doc_topics_sorted = sorted(doc_topics, key=lambda x: x[1], reverse=True)
+        dominant_topic = doc_topics_sorted[0][0] if doc_topics_sorted else -1
 
-        # Create a dictionary for the row
         row = {
-            "file_name": documents_metadata[i]["file_name"],
-            "Date": documents_metadata[i]["Date"],
-            "Originator": documents_metadata[i]["Originator"],
+            "file_name": documents_metadata[i].get("file_name", ""),
+            "Date": documents_metadata[i].get("Date", ""),
+            "Originator": documents_metadata[i].get("Originator", ""),
+            "Title": documents_metadata[i].get("Title", ""),
             "Dominant_Topic": dominant_topic
         }
-        # Add scores for each topic
         for topic_num, prop in doc_topics:
             row[f"Topic_{topic_num}"] = round(prop, 4)
         
         topic_dist_list.append(row)
 
     df_topic_dist = pd.DataFrame(topic_dist_list)
-    # Fill NaN for topics not present in a document
+    
+    # Fill missing columns
     for i in range(args.num_topics):
         if f"Topic_{i}" not in df_topic_dist.columns:
-            df_topic_dist[f"Topic_{i}"] = 0
-    df_topic_dist.fillna(0, inplace=True)
-    
+            df_topic_dist[f"Topic_{i}"] = 0.0
+            
     # Reorder columns
-    cols = ["file_name", "Date", "Originator", "Dominant_Topic"] + [f"Topic_{i}" for i in range(args.num_topics)]
+    cols = ["file_name", "Date", "Originator", "Title", "Dominant_Topic"] + [f"Topic_{i}" for i in range(args.num_topics)]
+    # Filter cols that actually exist in df
+    cols = [c for c in cols if c in df_topic_dist.columns]
     df_topic_dist = df_topic_dist[cols]
-
 
     doc_topic_dist_path = os.path.join(output_path, 'document_topic_distribution.csv')
     df_topic_dist.to_csv(doc_topic_dist_path, index=False, encoding='utf-8-sig')
     logger.info(f"Document-topic distributions saved to: {doc_topic_dist_path}")
-    logger.info("-" * 30)
     logger.info("Topic modeling process finished successfully!")
-
 
 if __name__ == "__main__":
     main()

@@ -13,13 +13,19 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
 import community as community_louvain
 from adjustText import adjust_text
-# --- 新增：导入gensim 和 datetime ---
 from gensim.models import Phrases
 from datetime import datetime
 
+# --- 引入新的数据读取模块 ---
+from json_read import load_data
+
 # 设置seaborn样式
 sns.set_theme(style="whitegrid", palette="pastel")
-plt.rcParams['font.sans-serif'] = ['SimHei']
+# 尝试设置中文字体，如果失败则回退
+try:
+    plt.rcParams['font.sans-serif'] = ['SimHei', 'Arial Unicode MS', 'Microsoft YaHei']
+except:
+    pass
 plt.rcParams['axes.unicode_minus'] = False
 EDGE_WEIGHT_THRESHOLD = 5.0
 
@@ -43,21 +49,18 @@ window_size = 5
 output_path = f'output/{args.title}/{args.subtitle}'
 co_output_path = os.path.join(output_path, 'cooccurrence_graph.png')
 freq_output_path = os.path.join(output_path, 'word_freq.json')
+
 stop_words = set(stopwords.words('english'))
 from stopword import additional_stopwords
-
-# Add these new words to the main stopword set
 stop_words.update(additional_stopwords)
-# 设定 data.json 的文件路径
 json_file_path = os.path.join(text_folder, "data.json")
 
 def setup_logger(log_file):
-    # (这部分代码保持不变)
     logger = logging.getLogger(args.title)
-    if logger.hasHandlers(): # 防止重复添加handler
+    if logger.hasHandlers():
         logger.handlers.clear()
     logger.setLevel(logging.INFO)
-    file_handler = logging.FileHandler(log_file, mode='w') # 每次运行覆盖日志
+    file_handler = logging.FileHandler(log_file, mode='w')
     file_handler.setLevel(logging.INFO)
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.INFO)
@@ -71,35 +74,27 @@ def setup_logger(log_file):
 logger = setup_logger(args.logging)
 
 def download_nltk_data():
-    # (这部分代码保持不变)
     nltk.download('averaged_perceptron_tagger', quiet=True)
     nltk.download('punkt', quiet=True)
     nltk.download('stopwords', quiet=True) 
     nltk.download('wordnet', quiet=True)
 
-# 定义词形还原器和词性转换函数（全局，避免重复创建）
 lemmatizer = WordNetLemmatizer()
 def get_wordnet_pos(treebank_tag):
-    if treebank_tag.startswith('J'):
-        return wordnet.ADJ
-    elif treebank_tag.startswith('V'):
-        return wordnet.VERB
-    elif treebank_tag.startswith('N'):
-        return wordnet.NOUN
-    elif treebank_tag.startswith('R'):
-        return wordnet.ADV
-    else:
-        return wordnet.NOUN
+    if treebank_tag.startswith('J'): return wordnet.ADJ
+    elif treebank_tag.startswith('V'): return wordnet.VERB
+    elif treebank_tag.startswith('N'): return wordnet.NOUN
+    elif treebank_tag.startswith('R'): return wordnet.ADV
+    else: return wordnet.NOUN
 
 def lemmatizing_tokenizer(text):
+    if not isinstance(text, str): return []
     tagged_tokens = nltk.pos_tag(nltk.word_tokenize(text))
     lemmas = []
     for word, tag in tagged_tokens:
-        # Only process words that are nouns (NN, NNS, NNP, NNPS)
         if tag.startswith('NN'): 
             pos = get_wordnet_pos(tag)
             lemma = lemmatizer.lemmatize(word.lower(), pos=pos)
-            # Check for stopwords *after* lemmatizing
             if len(lemma) > 1 and lemma.isalpha() and lemma not in stop_words:
                 lemmas.append(lemma)
     return lemmas
@@ -109,95 +104,75 @@ def main():
     documents = []
     
     try:
-        # 解析 YYYY-MM-DD 格式的日期参数
         start_date_obj = datetime.strptime(args.start_date, '%Y-%m-%d') if args.start_date else None
         end_date_obj = datetime.strptime(args.end_date, '%Y-%m-%d') if args.end_date else None
     except ValueError:
         logger.error("无效的日期格式。请使用 YYYY-MM-DD。")
         return
 
-    # 准备国家列表以进行不区分大小写的检查
     countries_to_check = [c.lower() for c in args.countries] if args.countries else None
     
     logger.info(f"应用筛选器 - 国家: {args.countries}, 开始日期: {args.start_date}, 结束日期: {args.end_date}")
 
-    # --- 步骤 2: 加载和筛选文档 ---
+    # --- 步骤 2: 加载和筛选文档 (使用 json_read) ---
     if os.path.exists(json_file_path):
-        with open(json_file_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            
-            filtered_doc_count = 0  # 用于记录通过筛选的文档数
-            
-            for file_content in data:
-                
-                # --- 应用筛选器 ---
-                
-                # 1. 国家 (Originator) 筛选
-                if countries_to_check:
-                    originator_str = file_content.get('Originator', '').lower()
-                    # 检查 'Originator' 字符串中是否包含 *任何* 目标国家
-                    if not any(country in originator_str for country in countries_to_check):
-                        continue  # 如果不匹配，则跳过此文档
+        # 使用 json_read 加载数据
+        df = load_data(json_file_path)
+        
+        filtered_doc_count = 0
+        
+        # 转换回列表字典以便沿用旧逻辑，或者直接操作DF
+        data_records = df.to_dict('records')
 
-                # 2. 日期 (Date) 筛选
-                item_date_str = file_content.get('Date')
-                if (start_date_obj or end_date_obj) and item_date_str:
+        for item in data_records:
+            # 1. 国家筛选
+            if countries_to_check:
+                originator_str = str(item.get('Originator', '')).lower()
+                if not any(country in originator_str for country in countries_to_check):
+                    continue
+
+            # 2. 日期筛选
+            if start_date_obj or end_date_obj:
+                item_date_str = item.get('Date')
+                if item_date_str:
                     try:
-                        # 解析 data.json 中的 DD/MM/YYYY 格式
                         item_date_obj = datetime.strptime(item_date_str, '%d/%m/%Y')
-                        
-                        if start_date_obj and item_date_obj < start_date_obj:
-                            continue  # 跳过：早于开始日期
-                        if end_date_obj and item_date_obj > end_date_obj:
-                            continue  # 跳过：晚于结束日期
-                            
-                    except ValueError:
-                        logger.warning(f"无法解析文档 {file_content.get('Symbol')} 的日期 '{item_date_str}'")
-                        continue  # 如果日期格式错误，跳过
+                        if start_date_obj and item_date_obj < start_date_obj: continue
+                        if end_date_obj and item_date_obj > end_date_obj: continue
+                    except (ValueError, TypeError):
+                        pass # 日期格式不对则忽略日期筛选或跳过，这里选择忽略
 
-                # --- 筛选器应用完毕 ---
+            # 3. 文本获取 (从 json_read 生成的 full_text 获取)
+            text = item.get('full_text', '')
+            if not text:
+                continue
 
-                # --- 步骤 3: 提取文本（去除最后一段） ---
-                content_list = file_content.get('content')
-                if not content_list:  # 如果没有内容，跳过
-                    continue
-                
-                # 使用切片 [:-1] 来获取除最后一个元素外的所有段落
-                text = " ".join(item['text'] for item in content_list[:-1])
-                
-                if not text:  # 如果（在去除最后一段后）文本为空，则跳过
-                    continue
-                
-                # --- 提取完毕 ---
-
-                documents.append(text)
-                filtered_doc_count += 1
+            documents.append(text)
+            filtered_doc_count += 1
                 
     else:
         logger.error(f"在文件夹中未找到 data.json: {text_folder}")
         return
     
-    logger.info(f"应用筛选器后加载了 {len(documents)} 篇文档 (共找到 {filtered_doc_count} 篇匹配的文档)。")
-    
-    # --- ^ ^ ^ --- 修改结束 --- ^ ^ ^ ---
+    logger.info(f"应用筛选器后加载了 {len(documents)} 篇文档。")
+    if not documents:
+        return
 
     # --- 步骤 4: 对所有文档进行分词和词形还原 ---
     logger.info("正在对所有文档进行分词和词形还原...")
     all_tokens = [lemmatizing_tokenizer(doc) for doc in documents]
+    all_tokens = [t for t in all_tokens if t] # 过滤空列表
+
+    if not all_tokens:
+        logger.error("分词后没有有效内容。")
+        return
     
     # --- 步骤 5: 使用 Gensim 训练和应用 Bigram 模型 ---
     logger.info("正在使用 gensim 训练 bigram 模型...")
-    # min_count: 词组至少出现的次数, threshold: 成组的评分阈值，越高越难成组
     phrases = Phrases(all_tokens, min_count=2, threshold=4) 
     bigram_phraser = phrases
-    # 将分词列表转换为包含bigram的列表
     tokens_with_bigrams = [bigram_phraser[doc] for doc in all_tokens]
-    logger.info("Bigram 模型训练和应用完成。")
-    # 打印一个样本看看效果
-    if tokens_with_bigrams and len(tokens_with_bigrams[0]) > 0:
-        logger.info(f"包含 bigram 的词元示例: {';'.join(tokens_with_bigrams[0][:20])}...")
-
-
+    
     # --- 步骤 6: 改造 TF-IDF Vectorizer ---
     logger.info("正在对包含 bigram 的词元运行 TF-IDF...")
     
@@ -207,26 +182,23 @@ def main():
         lowercase=False,
         max_features=top_k
     )
-    # 用包含bigram的列表来训练
     tfidf_matrix = vectorizer.fit_transform(tokens_with_bigrams)
     
     feature_names = vectorizer.get_feature_names_out()
     tfidf_scores = tfidf_matrix.sum(axis=0).A1
     word_tfidf = dict(zip(feature_names, tfidf_scores))
     sorted_words = sorted(word_tfidf.items(), key=lambda x: x[1], reverse=True)
-    top_words = [word for word, score in sorted_words] # top_k已经在vectorizer里限制了
+    top_words = [word for word, score in sorted_words] 
 
     with open(freq_output_path, 'w', encoding='utf-8') as f:
         json.dump(sorted_words, f, ensure_ascii=False, indent=4)
     logger.info(f"词频数据已保存至: {freq_output_path}")
-    logger.info(f"基于 TF-IDF 的前 {len(top_words)} 个词/短语: {top_words[:top_k]}")
 
     # --- 步骤 7: 更新共现网络的数据源 ---
     logger.info("正在构建共现图...")
     word_counts = defaultdict(int)
     cooccurrence = defaultdict(int)
     
-    # 直接使用已经处理好的 tokens_with_bigrams，不再重新分词
     for tokens in tokens_with_bigrams:
         filtered_tokens = [w for w in tokens if w in top_words]
         for word in filtered_tokens:
@@ -236,7 +208,7 @@ def main():
                 pair = tuple(sorted((filtered_tokens[i], filtered_tokens[j])))
                 cooccurrence[pair] += 1
 
-    # --- 网络图构建与可视化 (这部分代码保持不变) ---
+    # --- 网络图构建与可视化 ---
     G = nx.Graph()
     for word in top_words:
         if word_counts[word] > 0:
@@ -250,19 +222,17 @@ def main():
         logger.warning("图中没有节点。边缘权重阈值可能太高或未找到共现关系。")
         return
 
-    # 社群发现
     partition = community_louvain.best_partition(G)
     num_communities = len(set(partition.values()))
-    cmap = plt.get_cmap('Set3', max(num_communities, 8)) # 确保颜色数量足够
+    cmap = plt.get_cmap('Set3', max(num_communities, 8)) 
     node_colors = [cmap(partition[n]) for n in G.nodes()]
 
-    # 可视化
     plt.figure(figsize=(18, 14), facecolor='white')
     pos = nx.spring_layout(G, k=0.9, seed=42, iterations=150)
     node_sizes = [G.nodes[n]['size'] * 100 for n in G.nodes()]
     edge_weights = list(nx.get_edge_attributes(G, 'weight').values())
     
-    if edge_weights: # 避免权重为空列表
+    if edge_weights: 
         min_w, max_w = min(edge_weights), max(edge_weights)
         edge_alphas = [(w - min_w) / (max_w - min_w) * 0.7 + 0.1 if max_w > min_w else 0.5 for w in edge_weights]
     else:

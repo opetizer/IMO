@@ -1,11 +1,9 @@
-import json
 import plotly.express as px
 import os
 import argparse
 import logging
-import pandas as pd # <-- 新增：导入 pandas
-
-# ==========================================
+import pandas as pd
+from json_read import load_data  # 导入新的读取模块
 
 # ==========================================
 # 默认文件路径
@@ -42,78 +40,24 @@ def setup_logger(log_file, logger_name):
         logger.addHandler(console_handler)
     return logger
 
-# ==========================================
-
-# ==========================================
-def load_and_process_data(file_path):
-    
-    # 读取 JSON 文件
-    print(f"📥 正在加载数据文件: {file_path} ...")
-    with open(file_path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-    
-    # 【已修改】将加载的列表转换为 DataFrame
-    df = pd.DataFrame(data)
-    
-    # 【已修改】定义元数据提取函数，包含对 content 字段（API返回的JSON字符串）的解析
-    def extract_metadata(row):
-        # content 字段是 API 返回的 JSON 字符串。
-        content_str = row.get('content', '{}')
-        
-        content = {}
-        try:
-            # 清理潜在的 Markdown 代码围栏（例如 ```json...```）
-            cleaned_str = content_str.strip()
-            if cleaned_str.startswith("```json"):
-                cleaned_str = cleaned_str[7:].strip()
-            if cleaned_str.endswith("```"):
-                cleaned_str = cleaned_str[:-3].strip()
-
-            if cleaned_str:
-                content = json.loads(cleaned_str)
-        except json.JSONDecodeError:
-            # 解析失败时，使用空字典
-            pass
-
-        title = row.get('title', '')
-        
-        agenda = 'INF'
-        subject = 'No Subject'
-        summary = 'No Summary'
-
-        # 从解析后的内容中提取信息
-        meta = content.get('metadata', {})
-        sections = content.get('sections', {})
-        
-        # 优先使用 API 解析出的元数据
-        agenda = meta.get('agenda_item', 'INF')
-        subject = meta.get('subject', 'No Subject')
-        # summary 提取自 sections 字典
-        summary = sections.get('summary', 'No Summary')
-        
-        return pd.Series([agenda, subject, title, summary], 
-                         index=['Agenda_Item', 'Subject', 'Clean_Title', 'Summary'])
-
-    # 【已修改】将提取出的元数据合并回主 DataFrame
-    meta_df = df.apply(extract_metadata, axis=1)
-    df = pd.concat([df, meta_df], axis=1)
-
-    # 处理 Originator 列，拆分多个国家/组织
-
+def process_countries(df):
+    """处理 Originator 列，拆分多个国家/组织"""
+    # 确保 Originator 是字符串
+    df['Originator'] = df['Originator'].fillna('')
     df['Originator_Clean'] = df['Originator'].astype(str).str.replace(' and ', ', ', regex=False)
     df['Country_List'] = df['Originator_Clean'].str.split(',')
     df_exploded = df.explode('Country_List')
     df_exploded['Country'] = df_exploded['Country_List'].str.strip()
+    # 过滤空值
     df_exploded = df_exploded[df_exploded['Country'] != '']
-    
     return df_exploded
 
 def filter_top_countries(df, top_n=15):
-    """保留最活跃的 Top N 个国家，其余归为 'Others' (或直接过滤掉)"""
+    """保留最活跃的 Top N 个国家"""
     if df.empty:
         return df
     # 去除Secretariat等非国家实体
-    df = df[~df['Country'].str.lower().isin(['secretariat'])]
+    df = df[~df['Country'].str.lower().isin(['secretariat', 'secretary-general'])]
 
     # 统计国家出现的频次
     country_counts = df['Country'].value_counts()
@@ -122,26 +66,20 @@ def filter_top_countries(df, top_n=15):
     top_countries = country_counts.head(top_n).index.tolist()
     print(f"🌍 筛选出前 {top_n} 个活跃国家/组织: {top_countries[:5]}...")
     
-    # 方式A：只保留这些国家的数据 (推荐，图表更清晰)
+    # 只保留这些国家的数据
     df_filtered = df[df['Country'].isin(top_countries)].copy()
-    
-    # 方式B：其他的标记为 'Others' (如果不介意图表里有个巨大的 Others 块)
-    # df_filtered = df.copy()
-    # df_filtered.loc[~df_filtered['Country'].isin(top_countries), 'Country'] = 'Others'
-    
     return df_filtered
 
-# ==========================================
-
-# ==========================================
 def generate_visualizations(df, output_path="MEPC_Analysis_Report.html"):
     print("📊 正在生成图表...")
 
+    # 数据填充，防止空值导致的绘图错误
+    df['Agenda_Item'] = df['Agenda_Item'].fillna('Unknown')
+    df['Subject'] = df['Subject'].fillna('No Subject')
+
     # --- 1. 热力图 (Agenda vs Country) ---
-    # 统计 (Country, Agenda_Item) 组合的数量
     heatmap_df = df.groupby(['Country', 'Agenda_Item']).size().reset_index(name='Count')
     
-    # 透视表: 行=Country, 列=Agenda
     heatmap_matrix = heatmap_df.pivot(index='Country', columns='Agenda_Item', values='Count').fillna(0)
     
     # 按总提案数对国家排序
@@ -160,32 +98,23 @@ def generate_visualizations(df, output_path="MEPC_Analysis_Report.html"):
     fig_heatmap.update_layout(height=800)
 
     # --- 2. 旭日图 (Sunburst) ---
-    # 截断过长的 Subject 以防显示不下
-    
     fig_sunburst = px.sunburst(
         df,
-        path=['Agenda_Item', 'Country', 'Subject'], # 层级：议题 -> 国家 -> 具体主题
+        path=['Agenda_Item', 'Country', 'Subject'], 
         hover_data={'Title': True},
         title="<b>议题全景透视</b>",
         color='Agenda_Item',
         height=900,
-        maxdepth=2  # 默认显示层级深度，防止一开始太乱
+        maxdepth=2
     )
     
-    # # 悬挂提示中清晰地显示 Summary 信息
-    # fig_sunburst.update_traces(
-    #     hovertemplate='<b>%{label}</b><br>提案数: %{value}<br>概要: %{customdata[0]}',
-    #     customdata=df[['Summary']].values,
-    # )
-
-    # 优化文字显示,可以超出范围
     fig_sunburst.update_traces(
         textinfo="label+percent entry", 
-        insidetextorientation='radial', # 环形排列文字
+        insidetextorientation='radial',
         textfont_size=12,
     )
     fig_sunburst.update_layout(
-        uniformtext=dict(minsize=12), # 确保文字大小一致
+        uniformtext=dict(minsize=12),
         margin=dict(t=40, l=0, r=0, b=0)
     )
 
@@ -201,12 +130,10 @@ def generate_visualizations(df, output_path="MEPC_Analysis_Report.html"):
         y="Unique_Agendas",
         size="Total_Docs",
         color="Country",
-        # 【已移除】text="Country", # 移除静态文本标签
         hover_name="Country",
         title="<b>参与度分析 (数量 vs 广度)</b>",
         labels={"Total_Docs": "文件总数", "Unique_Agendas": "参与议题数"}
     )
-    # 【已移除】fig_bubble.update_traces(textposition='top center') # 移除对应的文本位置更新
     fig_bubble.update_layout(showlegend=False)
 
     # --- 输出 HTML ---
@@ -227,22 +154,18 @@ def generate_visualizations(df, output_path="MEPC_Analysis_Report.html"):
     
     print(f"🎉 报告已生成: {os.path.abspath(output_path)}")
 
-# ==========================================
-# 主程序
-# ==========================================
 if __name__ == "__main__":
     args = parse_arguments()
     logger = setup_logger(args.logging, args.title)
     
-    
-    df = load_and_process_data(args.file_path)
+    # 使用新的读取函数
+    df = load_data(args.file_path)
     
     if not df.empty:
+        df_exploded = process_countries(df)
+        df_filtered = filter_top_countries(df_exploded, top_n=TOP_N_COUNTRIES)
         
-        df_filtered = filter_top_countries(df, top_n=TOP_N_COUNTRIES)
-        
-        print(f"原始数据行数(Exploded): {len(df)} -> 筛选后行数: {len(df_filtered)}")
-        
+        print(f"原始数据行数: {len(df)} -> 拆分后: {len(df_exploded)} -> 筛选后: {len(df_filtered)}")
         
         generate_visualizations(df_filtered)
     else:

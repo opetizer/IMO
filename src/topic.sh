@@ -2,7 +2,7 @@
 
 TOPIC="MEPC"
 
-subtitle="$TOPIC$1"
+subtitle="$TOPIC $1"
 
 OUTPUT_PATH="output/$TOPIC/$subtitle"
 

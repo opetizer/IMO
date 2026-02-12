@@ -4,6 +4,7 @@ import json
 import networkx as nx
 import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 from collections import defaultdict
 from nltk.corpus import wordnet, stopwords
 from nltk.stem import WordNetLemmatizer
@@ -19,21 +20,34 @@ from datetime import datetime
 # --- 引入新的数据读取模块 ---
 from json_read import load_data
 
-# 设置seaborn样式
-sns.set_theme(style="whitegrid", palette="pastel")
-# 尝试设置中文字体，如果失败则回退
+# 设置通用绘图风格 (SCI 论文风格：白色背景，无网格或少网格)
+sns.set_theme(style="ticks", context="paper") # context="paper" 适合论文发表，字体大小适中
+# 尝试设置中文字体
 try:
-    plt.rcParams['font.sans-serif'] = ['SimHei', 'Arial Unicode MS', 'Microsoft YaHei']
+    plt.rcParams['font.sans-serif'] = ['SimHei', 'Arial Unicode MS', 'Microsoft YaHei', 'sans-serif']
 except:
     pass
 plt.rcParams['axes.unicode_minus'] = False
-EDGE_WEIGHT_THRESHOLD = 5.0
+plt.rcParams['pdf.fonttype'] = 42 # 确保导出PDF时文字可编辑
+plt.rcParams['ps.fonttype'] = 42
+
+# --- 边缘权重阈值 ---
+# 建议适当提高此值以减少连线密度，使图更清晰
+EDGE_WEIGHT_THRESHOLD = 3.0 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--title', type=str, required=True)
 parser.add_argument('--subtitle', type=str, required=True)
 parser.add_argument('--logging', type=str, required=True)
 parser.add_argument('--text_extracted_folder', type=str, required=True)
+parser.add_argument('--symbol', type=str, default=None,
+                    help="筛选会议 Symbol（例如 'MEPC 81'）。")
+parser.add_argument('--per_agenda', action='store_true',
+                    help="若设置，则在总体图之外为每个议题生成单独的共现图")
+parser.add_argument('--per_agenda_topk', type=int, default=40,
+                    help="每个议题图的 top-k 关键词数量（默认 40）")
+parser.add_argument('--min_agenda_nodes', type=int, default=20,
+                    help="每个议题共现图的最小节点数量阈值，小于该值的议题将被跳过（默认 5）")
 
 parser.add_argument('--countries', type=str, nargs='*', default=None,
                     help="用于筛选的国家列表 (Originator)。例如: --countries China Japan")
@@ -44,7 +58,7 @@ parser.add_argument('--end_date', type=str, default=None,
 args = parser.parse_args()
 
 text_folder = args.text_extracted_folder
-top_k = 100
+top_k = 80 # 略微减少节点数，使图更易读 (原100)
 window_size = 5
 output_path = f'output/{args.title}/{args.subtitle}'
 co_output_path = os.path.join(output_path, 'cooccurrence_graph.png')
@@ -99,10 +113,133 @@ def lemmatizing_tokenizer(text):
                 lemmas.append(lemma)
     return lemmas
 
+def build_cooccurrence_graph(token_docs, top_k_local=80, edge_threshold=EDGE_WEIGHT_THRESHOLD, window_local=window_size):
+    """基于已处理的 token 列表（每个元素是一篇文档的 tokens）构建共现网络并返回 NetworkX 图对象。
+    返回 None 如果图为空或无有效边。
+    """
+    if not token_docs:
+        return None
+
+    # TF-IDF 以决定 top_k
+    try:
+        vectorizer_local = TfidfVectorizer(
+            tokenizer=lambda x: x,
+            preprocessor=lambda x: x,
+            lowercase=False,
+            max_features=top_k_local
+        )
+        tfidf_matrix_local = vectorizer_local.fit_transform(token_docs)
+    except Exception as e:
+        logger.warning(f"TF-IDF 构建失败: {e}")
+        return None
+
+    feature_names_local = vectorizer_local.get_feature_names_out()
+    tfidf_scores_local = tfidf_matrix_local.sum(axis=0).A1
+    word_tfidf_local = dict(zip(feature_names_local, tfidf_scores_local))
+
+    sorted_words_local = sorted(word_tfidf_local.items(), key=lambda x: x[1], reverse=True)
+    top_words_local = [w for w, s in sorted_words_local]
+
+    # 构建共现
+    word_counts_local = defaultdict(int)
+    cooccurrence_local = defaultdict(int)
+
+    for tokens in token_docs:
+        filtered_tokens = [w for w in tokens if w in top_words_local]
+        for word in filtered_tokens:
+            word_counts_local[word] += 1
+        for i in range(len(filtered_tokens)):
+            for j in range(i + 1, min(i + window_local, len(filtered_tokens))):
+                w1, w2 = filtered_tokens[i], filtered_tokens[j]
+                if w1 == w2:
+                    continue
+                pair = tuple(sorted((w1, w2)))
+                cooccurrence_local[pair] += 1
+
+    G_local = nx.Graph()
+    for word in top_words_local:
+        if word_counts_local[word] > 0:
+            G_local.add_node(word, size=word_counts_local[word], weight=word_tfidf_local.get(word, 1.0))
+
+    for (w1, w2), freq in cooccurrence_local.items():
+        if w1 in G_local and w2 in G_local and freq >= edge_threshold:
+            G_local.add_edge(w1, w2, weight=freq)
+
+    # 移除孤立节点
+    isolates_local = list(nx.isolates(G_local))
+    if isolates_local:
+        G_local.remove_nodes_from(isolates_local)
+
+    if not G_local.nodes():
+        return None
+
+    return G_local
+
+
+def draw_graph(G, out_file, title_text, subtitle_text=None):
+    """绘制并保存共现图，样式与之前一致。"""
+    if G is None or not G.nodes():
+        logger.warning(f"图为空，跳过保存: {out_file}")
+        return
+
+    plt.figure(figsize=(12, 10), facecolor='white', dpi=300)
+
+    layout_k = 2.0 / np.sqrt(len(G.nodes())) if len(G.nodes()) > 0 else 1.0
+    pos_local = nx.spring_layout(G, k=layout_k, seed=42, iterations=100)
+
+    node_sizes_raw = np.array([G.nodes[n]['size'] for n in G.nodes()])
+    if len(node_sizes_raw) > 0 and node_sizes_raw.max() > node_sizes_raw.min():
+        norm_sizes = (node_sizes_raw - node_sizes_raw.min()) / (node_sizes_raw.max() - node_sizes_raw.min())
+        node_sizes_local = 100 + norm_sizes * 800
+    else:
+        node_sizes_local = [300] * len(G.nodes())
+
+    partition_local = community_louvain.best_partition(G)
+    unique_comms_local = sorted(list(set(partition_local.values())))
+    colors_local = plt.cm.tab20(np.linspace(0, 1, max(1, len(unique_comms_local))))
+    color_map_local = {com: colors_local[i] for i, com in enumerate(unique_comms_local)}
+    node_colors_local = [color_map_local[partition_local[n]] for n in G.nodes()]
+
+    edges_local = G.edges()
+    weights_local = [G[u][v]['weight'] for u, v in edges_local]
+    if weights_local:
+        max_w_local = max(weights_local)
+        width_local = [(w / max_w_local) * 2.5 + 0.5 for w in weights_local]
+    else:
+        width_local = 1.0
+
+    nx.draw_networkx_edges(G, pos_local, width=width_local, edge_color='#B0B0B0', alpha=0.4)
+    nx.draw_networkx_nodes(G, pos_local, node_size=node_sizes_local, node_color=node_colors_local, alpha=0.9,
+                           linewidths=1.5, edgecolors='white')
+
+    texts_local = []
+    for node, (x, y) in pos_local.items():
+        n_size = G.nodes[node]['size']
+        if len(node_sizes_raw) > 0:
+            font_size = 9 + (n_size - node_sizes_raw.min()) / (node_sizes_raw.max() - node_sizes_raw.min()) * 6
+        else:
+            font_size = 10
+        texts_local.append(plt.text(x, y, node.replace('_', ' '), fontsize=font_size,
+                                    fontweight='medium', ha='center', va='center',
+                                    bbox=dict(boxstyle="round,pad=0.1", fc="white", ec="none", alpha=0.6)))
+
+    adjust_text(texts_local, expand_points=(1.5, 1.5), arrowprops=dict(arrowstyle='-', color='gray', lw=0.5, alpha=0.5),
+                force_text=0.5, force_points=0.5)
+
+    plt.axis('off')
+    title_full = title_text if not subtitle_text else f"{title_text} — {subtitle_text}"
+    plt.title(title_full, fontsize=14, fontweight='bold', pad=12, loc='left')
+    plt.figtext(0.1, 0.02, f"Nodes: {len(G.nodes())}    Edges: {len(G.edges())}    Threshold: {EDGE_WEIGHT_THRESHOLD}", fontsize=8, color='gray')
+
+    os.makedirs(os.path.dirname(out_file), exist_ok=True)
+    plt.savefig(out_file, dpi=300, bbox_inches='tight')
+    plt.close()
+    logger.info(f"Saved graph: {out_file}")
+
+
 def main():
     download_nltk_data()
-    documents = []
-    
+
     try:
         start_date_obj = datetime.strptime(args.start_date, '%Y-%m-%d') if args.start_date else None
         end_date_obj = datetime.strptime(args.end_date, '%Y-%m-%d') if args.end_date else None
@@ -111,148 +248,141 @@ def main():
         return
 
     countries_to_check = [c.lower() for c in args.countries] if args.countries else None
-    
     logger.info(f"应用筛选器 - 国家: {args.countries}, 开始日期: {args.start_date}, 结束日期: {args.end_date}")
 
-    # --- 步骤 2: 加载和筛选文档 (使用 json_read) ---
-    if os.path.exists(json_file_path):
-        # 使用 json_read 加载数据
-        df = load_data(json_file_path)
-        
-        filtered_doc_count = 0
-        
-        # 转换回列表字典以便沿用旧逻辑，或者直接操作DF
-        data_records = df.to_dict('records')
+    if not os.path.exists(json_file_path):
+        logger.error(f"未找到 data.json: {json_file_path}")
+        return
 
-        for item in data_records:
-            # 1. 国家筛选
-            if countries_to_check:
-                originator_str = str(item.get('Originator', '')).lower()
-                if not any(country in originator_str for country in countries_to_check):
-                    continue
+    df = load_data(json_file_path)
+    records = df.to_dict('records')
 
-            # 2. 日期筛选
-            if start_date_obj or end_date_obj:
-                item_date_str = item.get('Date')
-                if item_date_str:
-                    try:
-                        item_date_obj = datetime.strptime(item_date_str, '%d/%m/%Y')
-                        if start_date_obj and item_date_obj < start_date_obj: continue
-                        if end_date_obj and item_date_obj > end_date_obj: continue
-                    except (ValueError, TypeError):
-                        pass # 日期格式不对则忽略日期筛选或跳过，这里选择忽略
+    # 筛选指定会议（Symbol）
+    meeting_symbol = args.symbol.lower() if args.symbol else None
+    meeting_records = []
+    for item in records:
+        if meeting_symbol:
+            sym = str(item.get('Symbol', '')).lower()
+            if meeting_symbol not in sym:
+                continue
+        # apply country/date filters
+        if countries_to_check:
+            originator_str = str(item.get('Originator', '')).lower()
+            if not any(country in originator_str for country in countries_to_check):
+                continue
+        if start_date_obj or end_date_obj:
+            item_date_str = item.get('Date')
+            if item_date_str:
+                try:
+                    item_date_obj = datetime.strptime(item_date_str, '%d/%m/%Y')
+                    if start_date_obj and item_date_obj < start_date_obj: continue
+                    if end_date_obj and item_date_obj > end_date_obj: continue
+                except (ValueError, TypeError):
+                    pass
+        meeting_records.append(item)
 
-            # 3. 文本获取 (从 json_read 生成的 full_text 获取)
-            text = item.get('full_text', '')
-            if not text:
+    logger.info(f"选中 {len(meeting_records)} 条记录用于会议级共现分析。")
+    if not meeting_records:
+        logger.warning("没有符合筛选条件的记录，结束。")
+        return
+
+    # 构建文档与议题映射
+    documents = []
+    agendas = []
+    subjects = []
+    for it in meeting_records:
+        text = it.get('full_text', '')
+        if text and isinstance(text, str) and text.strip():
+            documents.append(text)
+            agendas.append(it.get('Agenda_Item', 'INFO'))
+            subjects.append(it.get('Title', '') if it.get('Title') else '')
+
+    logger.info(f"有效文本数: {len(documents)}")
+    if not documents:
+        logger.warning("没有有效文本，结束。")
+        return
+
+    # NLP 处理
+    logger.info("分词与短语提取...")
+    all_tokens = [lemmatizing_tokenizer(doc) for doc in documents]
+    all_tokens = [t for t in all_tokens if t]
+    if not all_tokens:
+        logger.warning("分词后没有有效 tokens，结束。")
+        return
+
+    bigram_phraser = Phrases(all_tokens, min_count=2, threshold=4)
+    tokens_with_bigrams = [bigram_phraser[doc] for doc in all_tokens]
+    trigram_phraser = Phrases(tokens_with_bigrams, min_count=2, threshold=4)
+    processed_tokens_all = [trigram_phraser[doc] for doc in tokens_with_bigrams]
+
+    os.makedirs(output_path, exist_ok=True)
+    token_output_path = os.path.join(output_path, 'processed_tokens.json')
+    with open(token_output_path, 'w', encoding='utf-8') as f:
+        json.dump(processed_tokens_all, f, ensure_ascii=False, indent=4)
+
+    # 1) Overall graph for the meeting
+    logger.info("构建会议总体共现图...")
+    G_overall = build_cooccurrence_graph(processed_tokens_all, top_k_local=top_k)
+    overall_out = os.path.join(output_path, 'cooccurrence_overall.png')
+    draw_graph(G_overall, overall_out, f"{args.subtitle} (Overall)", subtitle_text=args.title)
+
+    # 2) Per-agenda graphs
+    if args.per_agenda:
+        per_out_dir = os.path.join(output_path, 'per_agenda')
+        os.makedirs(per_out_dir, exist_ok=True)
+        tokens_by_agenda = defaultdict(list)
+        subjects_by_agenda = defaultdict(list)
+        for ag, sub, toks in zip(agendas, subjects, processed_tokens_all):
+            tokens_by_agenda[ag].append(toks)
+            if sub and isinstance(sub, str) and sub.strip():
+                subjects_by_agenda[ag].append(sub.strip())
+
+        logger.info(f"为 {len(tokens_by_agenda)} 个议题生成单独的共现图")
+        per_agenda_meta = []
+        for ag, toks_list in tokens_by_agenda.items():
+            if not toks_list:
+                continue
+            subjects_list = list(dict.fromkeys(subjects_by_agenda.get(ag, [])))
+            subject_text_full = '; '.join(subjects_list)
+            subject_text_short = (subject_text_full[:120] + '...') if len(subject_text_full) > 120 else subject_text_full
+
+            G_ag = build_cooccurrence_graph(toks_list, top_k_local=args.per_agenda_topk)
+            n_nodes = 0 if (G_ag is None) else G_ag.number_of_nodes()
+            n_edges = 0 if (G_ag is None) else G_ag.number_of_edges()
+
+            # 跳过节点数量太少的议题
+            if G_ag is None or n_nodes < args.min_agenda_nodes:
+                logger.info(f"跳过议题 '{ag}'（节点数: {n_nodes}），Subjects: {subject_text_short}")
+                per_agenda_meta.append({
+                    'agenda': ag,
+                    'subjects': subjects_list,
+                    'nodes': n_nodes,
+                    'edges': n_edges,
+                    'status': 'skipped',
+                    'reason': 'too_few_nodes'
+                })
                 continue
 
-            documents.append(text)
-            filtered_doc_count += 1
-                
-    else:
-        logger.error(f"在文件夹中未找到 data.json: {text_folder}")
-        return
-    
-    logger.info(f"应用筛选器后加载了 {len(documents)} 篇文档。")
-    if not documents:
-        return
+            safe_name = str(ag).replace('/', '_').replace(' ', '_')[:80]
+            out_file_ag = os.path.join(per_out_dir, f'cooccurrence_agenda_{safe_name}.png')
+            draw_graph(G_ag, out_file_ag, f"{args.subtitle} (Agenda: {ag})", subtitle_text=f"{args.title} — {subject_text_short}")
 
-    # --- 步骤 4: 对所有文档进行分词和词形还原 ---
-    logger.info("正在对所有文档进行分词和词形还原...")
-    all_tokens = [lemmatizing_tokenizer(doc) for doc in documents]
-    all_tokens = [t for t in all_tokens if t] # 过滤空列表
+            per_agenda_meta.append({
+                'agenda': ag,
+                'subjects': subjects_list,
+                'nodes': n_nodes,
+                'edges': n_edges,
+                'status': 'ok',
+                'file': out_file_ag
+            })
 
-    if not all_tokens:
-        logger.error("分词后没有有效内容。")
-        return
-    
-    # --- 步骤 5: 使用 Gensim 训练和应用 Bigram 模型 ---
-    logger.info("正在使用 gensim 训练 bigram 模型...")
-    phrases = Phrases(all_tokens, min_count=2, threshold=4) 
-    bigram_phraser = phrases
-    tokens_with_bigrams = [bigram_phraser[doc] for doc in all_tokens]
-    
-    # --- 步骤 6: 改造 TF-IDF Vectorizer ---
-    logger.info("正在对包含 bigram 的词元运行 TF-IDF...")
-    
-    vectorizer = TfidfVectorizer(
-        tokenizer=lambda x: x,
-        preprocessor=lambda x: x,
-        lowercase=False,
-        max_features=top_k
-    )
-    tfidf_matrix = vectorizer.fit_transform(tokens_with_bigrams)
-    
-    feature_names = vectorizer.get_feature_names_out()
-    tfidf_scores = tfidf_matrix.sum(axis=0).A1
-    word_tfidf = dict(zip(feature_names, tfidf_scores))
-    sorted_words = sorted(word_tfidf.items(), key=lambda x: x[1], reverse=True)
-    top_words = [word for word, score in sorted_words] 
+        # 保存 per-agenda 的元数据
+        meta_out = os.path.join(per_out_dir, 'per_agenda_meta.json')
+        with open(meta_out, 'w', encoding='utf-8') as mf:
+            json.dump(per_agenda_meta, mf, ensure_ascii=False, indent=2)
+        logger.info(f"Per-agenda metadata saved: {meta_out}")
 
-    with open(freq_output_path, 'w', encoding='utf-8') as f:
-        json.dump(sorted_words, f, ensure_ascii=False, indent=4)
-    logger.info(f"词频数据已保存至: {freq_output_path}")
-
-    # --- 步骤 7: 更新共现网络的数据源 ---
-    logger.info("正在构建共现图...")
-    word_counts = defaultdict(int)
-    cooccurrence = defaultdict(int)
-    
-    for tokens in tokens_with_bigrams:
-        filtered_tokens = [w for w in tokens if w in top_words]
-        for word in filtered_tokens:
-            word_counts[word] += 1
-        for i in range(len(filtered_tokens)):
-            for j in range(i + 1, min(i + window_size, len(filtered_tokens))):
-                pair = tuple(sorted((filtered_tokens[i], filtered_tokens[j])))
-                cooccurrence[pair] += 1
-
-    # --- 网络图构建与可视化 ---
-    G = nx.Graph()
-    for word in top_words:
-        if word_counts[word] > 0:
-            G.add_node(word, size=np.sqrt(word_counts[word]))
-
-    for (w1, w2), freq in cooccurrence.items():
-        if w1 in G and w2 in G and w1 != w2 and freq > EDGE_WEIGHT_THRESHOLD:
-            G.add_edge(w1, w2, weight=freq)
-
-    if not G.nodes():
-        logger.warning("图中没有节点。边缘权重阈值可能太高或未找到共现关系。")
-        return
-
-    partition = community_louvain.best_partition(G)
-    num_communities = len(set(partition.values()))
-    cmap = plt.get_cmap('Set3', max(num_communities, 8)) 
-    node_colors = [cmap(partition[n]) for n in G.nodes()]
-
-    plt.figure(figsize=(18, 14), facecolor='white')
-    pos = nx.spring_layout(G, k=0.9, seed=42, iterations=150)
-    node_sizes = [G.nodes[n]['size'] * 100 for n in G.nodes()]
-    edge_weights = list(nx.get_edge_attributes(G, 'weight').values())
-    
-    if edge_weights: 
-        min_w, max_w = min(edge_weights), max(edge_weights)
-        edge_alphas = [(w - min_w) / (max_w - min_w) * 0.7 + 0.1 if max_w > min_w else 0.5 for w in edge_weights]
-    else:
-        edge_alphas = 0.5
-
-    nx.draw_networkx_nodes(G, pos, node_size=node_sizes, node_color=node_colors, alpha=0.9)
-    nx.draw_networkx_edges(G, pos, width=2.0, edge_color='grey', alpha=edge_alphas)
-
-    texts = []
-    for node, (x, y) in pos.items():
-        font_size = 10 + np.sqrt(G.nodes[node]['size'])
-        texts.append(plt.text(x, y, node.replace('_', ' '), fontsize=font_size, ha='center', va='center'))
-
-    adjust_text(texts, arrowprops=dict(arrowstyle='-', color='gray', lw=0.5))
-
-    plt.title(f"{args.subtitle} 关键词共现图", fontsize=20, pad=20)
-    plt.axis('off')
-    plt.savefig(co_output_path, dpi=300, bbox_inches='tight')
-    
-    logger.info(f"优化后的共现图已保存至: {co_output_path}")
+    logger.info("共现图生成完毕。")
 
 if __name__ == "__main__":
     main()

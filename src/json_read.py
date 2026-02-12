@@ -67,38 +67,42 @@ def load_data(file_path):
             'Date': item.get('Date'),
             'Symbol': item.get('Symbol'),
             'Originator': item.get('Originator'),
-            'Title_Raw': item.get('Title'), # 原始标题（来自索引）
+            'Title': item.get('Title'),
         }
+        # 清洗数据里可能出现的'\n'字符,多余空格等
+        row['Title'] = ' '.join(row['Title'].split()) if row['Title'] else row['Title']
 
         # 2. 解析 LLM 生成的内容 (content 字段)
         content_data = parse_nested_content(item.get('content', '{}'))
         
         # 3. 提取元数据 (Metadata)
         meta = content_data.get('metadata', {})
-        row['Agenda_Item'] = meta.get('agenda_item')
+        row['Agenda_Item'] = meta.get('agenda_item') or "INFO"
         row['Subject'] = meta.get('subject')
         # 优先使用 LLM 提取的标题，如果没有则使用原始标题
-        row['Title'] = meta.get('title') if meta.get('title') else row['Title_Raw']
-        row['Session'] = meta.get('session')
+        # row['Title'] = meta.get('title') if meta.get('title') else row['Title_Raw']
+        # row['Session'] = meta.get('session')
         
         # 4. 提取章节内容 (Sections)
         sections = content_data.get('sections', {})
         row['Summary'] = sections.get('summary')
         row['Introduction'] = sections.get('introduction')
-        row['Action_Requested'] = sections.get('action_requested')
+        # row['Action_Requested'] = sections.get('action_requested')
         row['Annex_Content'] = sections.get('annex_content')
 
         # 5. 构建用于 NLP 分析的完整文本 (合并主要章节)
         # 将各部分拼接起来，用换行符分隔
         text_parts = []
-        if row['Title']: text_parts.append(row['Title'])
+        # if row['Subject']: text_parts.append(row['Subject'])
         if row['Summary']: text_parts.append(row['Summary'])
         if row['Introduction']: text_parts.append(row['Introduction'])
         if row['Annex_Content']: text_parts.append(row['Annex_Content'])
-        # 也可以选择加入 action_requested
         
         row['full_text'] = "\n\n".join([t for t in text_parts if t and isinstance(t, str)])
         
+        # 6. 添加提取的表格数据（如果有）
+        row['Extracted_Tables'] = content_data.get('extracted_tables', [])
+
         processed_rows.append(row)
 
     df = pd.DataFrame(processed_rows)

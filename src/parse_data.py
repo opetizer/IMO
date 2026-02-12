@@ -44,15 +44,19 @@ def setup_logger(log_file, logger_name):
 
 # --- File I/O and Parsing Functions ---
 
-def read_index_file(index_path, logger):
-    """Reads an index.htm file and returns a list of file metadata."""
-    logger.info(f"Reading index file from: {index_path}")
+def read_index_file(index_path, data_folder, logger):
+    """Reads an index.htm file and returns a list of file metadata.
+
+    If the index file is missing or contains no entries, fall back to listing
+    PDF files directly from the directory.
+    """
+    logger.info(f"Attempting to read index file from: {index_path}")
     try:
         with open(index_path, 'r', encoding='utf-8') as f:
             soup = BeautifulSoup(f, 'html.parser')
     except FileNotFoundError:
-        logger.error(f"Index file not found at {index_path}")
-        return []
+        logger.warning(f"Index file not found at {index_path}; falling back to directory listing.")
+        return list_files_from_directory(data_folder, logger)
 
     file_info_list = []
     for row in soup.find_all('tr'):
@@ -68,7 +72,42 @@ def read_index_file(index_path, logger):
                     'file_name': symbol_tag['href']
                 }
                 file_info_list.append(file_info)
+
+    if not file_info_list:
+        logger.warning(f"No entries found in index at {index_path}; falling back to directory listing.")
+        return list_files_from_directory(data_folder, logger)
+
     logger.info(f"Found {len(file_info_list)} files to process in index.")
+    return file_info_list
+
+
+def list_files_from_directory(data_folder, logger):
+    """Generate a file metadata list by listing PDF files in the directory.
+
+    This is a fallback when an index file isn't available. Returns the same
+    `file_info` dict structure used by `read_index_file` so downstream code
+    can remain unchanged.
+    """
+    logger.info(f"Listing files in directory: {data_folder}")
+    file_info_list = []
+    try:
+        for fname in os.listdir(data_folder):
+            if fname.lower().endswith('.pdf'):
+                name = os.path.splitext(fname)[0]
+                
+                file_info = {
+                    'Date': '',
+                    'Symbol': name.split(' - ')[0].replace('-', '/').strip(),
+                    'Title': '',
+                    'Originator': '',
+                    'file_name': fname
+                }
+                file_info_list.append(file_info)
+    except FileNotFoundError:
+        logger.error(f"Data folder not found: {data_folder}")
+        return []
+
+    logger.info(f"Found {len(file_info_list)} files to process in directory listing.")
     return file_info_list
 
 def extract_text_from_pdf(file_path, logger):
@@ -180,7 +219,7 @@ if __name__ == "__main__":
     output_xlsx_path = os.path.join(output_dir, 'data.xlsx')
     
     # 3. Core Logic
-    files_to_process = read_index_file(index_path, logger)
+    files_to_process = read_index_file(index_path, data_folder, logger)
     if files_to_process:
         database = process_files(data_folder, files_to_process, logger)
         

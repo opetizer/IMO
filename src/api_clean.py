@@ -1,46 +1,44 @@
+"""
+api_clean.py - LLM-based document parsing for IMO proposals
+Updated: 2026-02-12 - Switched from Qwen to Claude (Anthropic API)
+"""
 import re
 import os
 import json
-from openai import OpenAI  # 替换 ollama 为 openai
 
-API_KEY = os.getenv("QWEN_API_KEY")  # 确保设置了 API_KEY 环境变量
-BASE_URL = os.getenv("QWEN_BASE_URL")  # 确保设置了 BASE_URL 环境变量
+# Try Anthropic first, fall back to OpenAI-compatible
+try:
+    import anthropic
+    HAS_ANTHROPIC = True
+except ImportError:
+    HAS_ANTHROPIC = False
 
-# 正则清洗函数保持不变
+from openai import OpenAI
+
+# --- Configuration ---
+# Priority: Anthropic Claude > OpenAI-compatible fallback
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+# Fallback: OpenAI-compatible endpoint (e.g., Qwen, local LLM)
+FALLBACK_API_KEY = os.getenv("QWEN_API_KEY", os.getenv("OPENAI_API_KEY", ""))
+FALLBACK_BASE_URL = os.getenv("QWEN_BASE_URL", "")
+
+# Model selection
+CLAUDE_MODEL = "claude-sonnet-4-20250514"  # Best balance of cost/quality for structured extraction
+FALLBACK_MODEL = os.getenv("LLM_MODEL", "qwen-plus")
+
+
 def clean_text_regex(text):
-    """使用正则表达式进行基础的文本格式清洗"""
-    # 去除时间（如 12:34、2023-01-01 12:34:56）
+    """Basic regex-based text cleaning."""
     text = re.sub(r'\d{1,2}:\d{2}(:\d{2})?', '', text)
     text = re.sub(r'\d{4}-\d{1,2}-\d{1,2}( \d{1,2}:\d{2}(:\d{2})?)?', '', text)
-    # 去除无意义字符（如特殊符号，保留常用标点和汉字、字母、数字）
-    text = re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9，。！？、；：“”‘’（）《》【】,.!?;:"\'()\[\]<> \n]', '', text)
-    # 合并多余空格和换行
+    text = re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9，。！？、；：""''（）《》【】,.!?;:"\'()\[\]<> \n]', '', text)
     text = re.sub(r'[ \t]+', ' ', text)
     text = re.sub(r'\n+', '\n', text)
-    # 去除行首尾空格
     text = '\n'.join(line.strip() for line in text.splitlines())
     return text
 
-def llm_api_clean(input_path, output_path, api_key = API_KEY, base_url = BASE_URL, model_name = "qwen-plus"):
-    """
-    使用兼容OpenAI格式的云端大模型API来清洗和格式化文本。
-    """
-    try:
-        with open(input_path, 'r', encoding='utf-8') as f:
-            raw_text = f.read()
-    except FileNotFoundError:
-        print(f"错误：输入文件未找到 -> {input_path}")
-        return
 
-    # 初始化 OpenAI 客户端，但指向指定的云服务API
-    client = OpenAI(
-        api_key=api_key,
-        base_url=base_url,
-    )
-
-    # 将原来的长 prompt 分为 system 指令和 user 输入，这是标准的 API 格式
-    # 这是在Python代码中使用的版本
-    system_prompt = ("""
+SYSTEM_PROMPT = """
 You are an expert document parsing AI, specializing in official documents from the International Maritime Organization (IMO), such as those for the Marine Environment Protection Committee (MEPC).
 
 Your task is to receive the pre-cleaned text of **any** such document and convert it into a single, structured JSON object. You must **dynamically** find the information, not assume pre-set values.
@@ -55,19 +53,19 @@ Your task is to receive the pre-cleaned text of **any** such document and conver
     * You must reconstruct **each** table you find into a clean, well-formatted **Markdown string**.
     * Capture each table as an object within the `extracted_tables` array.
 
-You must output **only** the completed JSON object based on the format below. Do not add any extra explanations or comments.
+You must output **only** the completed JSON object based on the format below. Do not add any extra explanations or comments. The language should only be English. The output must be valid JSON.
 
 **Output JSON Format:**
 ```json
 {
 "metadata": {
     "document_id": "[Extract from header, e.g., 'MEPC 78/3/1' or 'MEPC 80/INF.2']",
-    "session": "[Extract from header, e.g., '78th session' or '80th session']",
+    "session": "[Extract from header, e.g., '78' or '80']",
     "agenda_item": "[Extract from header, e.g., '3' or null if not found]",
-    "date": "[Extract from header, e.g., '26 January 2022']",
-    "title": "[Extract the main title, e.g., 'CONSIDERATION AND ADOPTION OF AMENDMENTS...']",
+    "date": "[Extract from header, e.g., '8 July 2024', return "2024/7/8" format]",
+    "title": "[Extract the main title, e.g., 'REDUCTION OF GHG EMISSION']",
     "subject": "[Extract the secondary title or subject, e.g., 'Draft amendments to MARPOL Annex II...']",
-    "submitted_by": "[Extract the author/submitter, e.g., 'Note by the Secretariat' or a specific country]"
+    "submitted_by": "[Extract the author/submitter, e.g., 'Submitted by China, Japan and South Korea', return a list of countries]"
 },
 "sections": {
     "summary": "[Extract text following 'Executive summary:', or 'SUMMARY', or null if not found]",
@@ -80,82 +78,107 @@ You must output **only** the completed JSON object based on the format below. Do
     "table_title": "[Extract the title for the first table found, e.g., 'Table 1 - Proposed Amendments']",
     "source_section": "[Identify where the table was found, e.g., 'ANNEX' or 'Body']",
     "markdown_content": "[The first table, fully reconstructed as a clean Markdown string]"
-    },
-    {
-    "table_title": "[Extract the title for the second table found, e.g., 'Table A - Bioaccumulation']",
-    "source_section": "ANNEX",
-    "markdown_content": "[The second table, fully reconstructed as a clean Markdown string]"
     }
 ]
 }
 ```
+"""
+
+
+def llm_api_clean(input_path, output_path, api_key=None, base_url=None, model_name=None):
     """
-    )
-    
+    Parse and structure an IMO document using LLM.
+    Priority: Claude (Anthropic) > OpenAI-compatible fallback.
+    """
+    try:
+        with open(input_path, 'r', encoding='utf-8') as f:
+            raw_text = f.read()
+    except FileNotFoundError:
+        print(f"Error: Input file not found -> {input_path}")
+        return
+
     user_prompt = "Please handle the following text to be processed according to your role and rules:\n\n" + raw_text
 
-    print(f"正在使用模型 '{model_name}' 调用API进行清洗，请稍候...")
-    
-    try:
-        # 使用 chat.completions.create 方法，这是标准的对话模型调用方式
-        response = client.chat.completions.create(
-            model=model_name,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            # 可以根据需要调整温度参数，0.0表示更确定性的输出
-            temperature=0.0, 
-            response_format={"type": "json_object"}
-        )
-        
-        # 解析新格式的响应
-        cleaned_text = response.choices[0].message.content.strip()
+    cleaned_text = None
 
-    except Exception as e:
-        print(f"调用API时发生错误: {e}")
-        # 发生错误时，写入一个空的JSON结构，以防下游任务中断
-        cleaned_text = json.dumps({})
+    # --- Try Claude (Anthropic) first ---
+    if HAS_ANTHROPIC and ANTHROPIC_API_KEY:
+        model = model_name or CLAUDE_MODEL
+        print(f"Using Claude model '{model}' via Anthropic API...")
+        try:
+            client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+            response = client.messages.create(
+                model=model,
+                max_tokens=8192,
+                system=SYSTEM_PROMPT,
+                messages=[{"role": "user", "content": user_prompt}],
+                temperature=0.0,
+            )
+            cleaned_text = response.content[0].text.strip()
+            # Extract JSON from possible markdown code fence
+            if cleaned_text.startswith("```json"):
+                cleaned_text = cleaned_text[7:]
+            if cleaned_text.startswith("```"):
+                cleaned_text = cleaned_text[3:]
+            if cleaned_text.endswith("```"):
+                cleaned_text = cleaned_text[:-3]
+            cleaned_text = cleaned_text.strip()
+        except Exception as e:
+            print(f"Claude API error: {e}. Falling back...")
+            cleaned_text = None
 
+    # --- Fallback to OpenAI-compatible API ---
+    if cleaned_text is None:
+        _api_key = api_key or FALLBACK_API_KEY
+        _base_url = base_url or FALLBACK_BASE_URL
+        _model = model_name or FALLBACK_MODEL
 
-    # 去除可能的<think>...</think>标签（一些模型可能会在内部思考过程中产生）
+        if not _api_key:
+            print("Error: No API key available (neither ANTHROPIC_API_KEY nor fallback).")
+            cleaned_text = json.dumps({})
+        else:
+            print(f"Using fallback model '{_model}' via OpenAI-compatible API...")
+            try:
+                client = OpenAI(api_key=_api_key, base_url=_base_url)
+                response = client.chat.completions.create(
+                    model=_model,
+                    messages=[
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    temperature=0.0,
+                    response_format={"type": "json_object"}
+                )
+                cleaned_text = response.choices[0].message.content.strip()
+            except Exception as e:
+                print(f"Fallback API error: {e}")
+                cleaned_text = json.dumps({})
+
+    # Clean up think tags
     cleaned_text = re.sub(r'<think>.*?</think>', '', cleaned_text, flags=re.DOTALL)
-        
-    # 确保输出目录存在
+
+    # Ensure output directory exists
     output_dir = os.path.dirname(output_path)
     if output_dir and not os.path.exists(output_dir):
         os.makedirs(output_dir)
-        print(f"已创建输出目录: {output_dir}")
 
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(cleaned_text)
-    
-    print(f"处理完成！清洗后的文件已保存至: {output_path}")
+
+    print(f"Done! Cleaned file saved to: {output_path}")
 
 
 if __name__ == "__main__":
-    # --- 配置区域 ---
-    # 强烈建议使用环境变量来存储API密钥，而不是硬编码在代码里
-    # os.environ["QWEN_API_KEY"] = "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" # 临时测试用
-    qwen_api_key = os.getenv("QWEN_API_KEY")
-
-    if not qwen_api_key:
-        print("错误：环境变量 QWEN_API_KEY 未设置。请先设置您的API密钥。")
+    import sys
+    if len(sys.argv) >= 3:
+        llm_api_clean(sys.argv[1], sys.argv[2])
     else:
-        # 通义千问的API基础URL
-        qwen_base_url = os.getenv("QWEN_BASE_URL", "https://api.qwen.ai/v1/chat/completions")
-        # 选择一个合适的模型，例如 qwen-plus, qwen-max
-        qwen_model = "qwen-plus"
-
-        # 定义输入和输出文件路径
-        input_txt = "data\MEPC\MEPC 77\MEPC 77-4 - Application for Basic Approval of the RADClean® BWMS (Islamic Republic of Iran).pdf"
-        output_txt = f"{os.path.basename(input_txt).replace('.pdf', '_cleaned_by_qwen.txt')}"
-        
-        # 调用主函数
-        llm_api_clean(
-            input_path=input_txt, 
-            output_path=output_txt, 
-            api_key=qwen_api_key, 
-            base_url=qwen_base_url, 
-            model_name=qwen_model
-        )
+        print("Usage: python api_clean.py <input_path> <output_path>")
+        print("\nEnvironment variables:")
+        print("  ANTHROPIC_API_KEY  - Claude API key (preferred)")
+        print("  QWEN_API_KEY       - Qwen/fallback API key")
+        print("  QWEN_BASE_URL      - Fallback API base URL")
+        print(f"\nCurrent config:")
+        print(f"  Anthropic available: {HAS_ANTHROPIC}")
+        print(f"  Anthropic key set: {bool(ANTHROPIC_API_KEY)}")
+        print(f"  Fallback key set: {bool(FALLBACK_API_KEY)}")

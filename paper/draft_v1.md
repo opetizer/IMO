@@ -139,7 +139,7 @@ BERTopic identified a total of 88 distinct topics across the five committees (Ta
 | MEPC | 856 | 11 | 14.7% | GHG emissions, ballast water, marine plastic litter |
 | MSC | 837 | 37 | 17.8% | Maritime safety, MASS regulation, cyber security |
 | CCC | 396 | 19 | 16.4% | IMSBC Code, alternative fuel safety, containers lost at sea |
-| SSE | 349 | 22 | 15.8% | Fire safety, life-saving appliances, survival craft |
+| SSE | 349 | 12 | 12.9% | Fire safety, life-saving appliances, survival craft |
 | ISWG-GHG | 85 | 9 | 22.4% | GHG reduction measures, fuel standards, pricing mechanisms |
 
 **MEPC** exhibited the most concentrated topic structure, with a single dominant topic (T0: emissions/marine environment/fuels) encompassing 493 of 856 documents (57.6%). This reflects the committee's increasing focus on GHG reduction following the adoption of the 2023 IMO GHG Strategy. Other distinct topics included ballast water management (114 docs), marine plastic litter (30 docs), PSSAs (17 docs), underwater noise (17 docs), and ship recycling (9 docs).
@@ -189,8 +189,8 @@ Twenty-two countries and organizations are active across all five committees, wi
 - MEPC: 45 proposals (emissions-focused but diversified)
 - MSC: 56 proposals (uniquely emphasizing domestic ferry safety)
 - CCC: 30 proposals (balanced between bulk cargoes and fuel safety)
-- SSE: 32 proposals (highest diversity at 0.732)
-- ISWG-GHG: 8 proposals (advocating the IMSF&F fund mechanism)
+- SSE: 59 proposals (highest diversity at 0.759)
+- ISWG-GHG: 9 proposals (advocating the IMSF&F fund mechanism)
 
 This contrasts with entities like **ReCAAP-ISC**, which submits exclusively to MSC on piracy topics (diversity = 0), or **BIC** (Bureau International des Containers), focused entirely on container-related topics in CCC.
 

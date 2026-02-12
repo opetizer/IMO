@@ -12,7 +12,7 @@ def merge_session_data():
     # 确定要合并的会话范围
     start_session = 77
     end_session = 83
-    session_folders = [f"MEPC{i}" for i in range(start_session, end_session + 1)]
+    session_folders = [f"MEPC {i}" for i in range(start_session, end_session + 1)]
     
     merged_data = []
     total_files = 0

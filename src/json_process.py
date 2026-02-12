@@ -1,144 +1,114 @@
 import json
+import argparse
+import os
 import re
 from collections import defaultdict
+import pandas as pd
+import logging
 
-DATA_DIR = 'data'
-TOPIC = 'MEPC'
-SESSION = 'MEPC 77'
-INDEX_FILE = 'Index.htm'
-OUTPUT_PATH = f'output/{SESSION}'
-OUTPUT_JSON_PATH = f'{OUTPUT_PATH}/data.json'
-PROCESSED_JSON_PATH = f'{OUTPUT_PATH}/data_processed.json'
-
-def split_related_documents_final(related_docs):
-    """
-    Splits the related_document field based on specific document prefixes
-    and delimiters like 'and', ';'.
-    """
-    if not related_docs:
-        return []
-
-    # If it's a list with multiple items, assume it's pre-processed
-    if isinstance(related_docs, list) and len(related_docs) > 1:
-        return related_docs
-    
-    # If it's a list with one item, treat it as a string
-    if isinstance(related_docs, list) and len(related_docs) == 1:
-        text = related_docs[0]
-    elif isinstance(related_docs, str):
-        text = related_docs
-    else:
-        return []
-
-    # Normalize delimiters to a single character for splitting
-    text = text.replace(' and ', ';').replace('; ', ';')
-    
-    # Initial split by the normalized delimiter
-    initial_split = text.split(';')
-
-    final_docs = []
-    # Define the prefixes to identify the start of a new document
-    prefixes = ["MEPC", "MSC", "SSE", "ISWG-GHG", "CCC", "Resolution", "PPR"]
-
-    for item in initial_split:
-        item = item.strip()
-        
-        # Create a regex pattern to find prefixes within a single item
-        pattern = r'(' + '|'.join(prefixes) + r')'
-        
-        # Find all start indices of the prefixes
-        indices = [m.start() for m in re.finditer(pattern, item)]
-
-        if len(indices) > 1:
-            # If multiple prefixes are found in one item (e.g., "MEPC 76/9/1 MEPC 76/9/2")
-            for i in range(len(indices)):
-                start = indices[i]
-                end = indices[i+1] if i + 1 < len(indices) else len(item)
-                doc_str = item[start:end].strip()
-                final_docs.append(doc_str)
-        elif item:
-            # If only one or no prefix is found, add the item as is
-            final_docs.append(item)
-            
-    # Clean up any empty strings that might have been added
-    final_docs = [doc for doc in final_docs if doc]
-    
-    return final_docs
-
-
+# 尝试导入通用读取模块
 try:
-    # 1. 读取 data.json 文件
-    with open(OUTPUT_JSON_PATH, 'r', encoding='utf-8') as f:
-        data = json.load(f)
+    from json_read import load_data
+except ImportError:
+    # 如果找不到模块，提供一个简单的 fallback 或者报错
+    print("错误: 找不到 json_read.py 模块。请确保该文件在 src 目录下。")
+    exit(1)
 
-    # 2. 将 Originator 里面的国家根据 "," 和 "and" 拆分
-    for item in data:
-        originator = item.get('Originator', '')
-        if originator:
-            originator = originator.replace(' and ', ', ')
-            item['Originator_split'] = [country.strip() for country in originator.split(',') if country.strip()]
+# 配置日志
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
-    # 3. 将 related document 拆分
-    for item in data:
-        related_docs_raw = item.get('summary', {}).get('related_document')
-        item['related_document_split'] = split_related_documents_final(related_docs_raw)
+def parse_args():
+    parser = argparse.ArgumentParser(description="Process JSON data for word frequency and metadata splitting.")
+    parser.add_argument('--title', type=str, required=True, help="Main topic folder, e.g., MEPC")
+    parser.add_argument('--subtitle', type=str, required=True, help="Sub topic folder, e.g., MEPC 77")
+    return parser.parse_args()
 
-    # 准备文本内容
-    all_text = ""
-    for item in data:
-        text_content = []
-        text_content.append(item.get('Title', ''))
-        
-        summary = item.get('summary', {})
-        if summary and isinstance(summary, dict):
-            text_content.append(summary.get('text', ''))
+def split_originator(originator_str):
+    """拆分 Originator 字段中的多个国家/组织"""
+    if not isinstance(originator_str, str):
+        return []
+    # 替换常见的连接词
+    cleaned = originator_str.replace(' and ', ', ').replace(';', ',')
+    # 拆分并去除空格
+    return [item.strip() for item in cleaned.split(',') if item.strip()]
 
-        content = item.get('content', [])
-        if content and isinstance(content, list):
-            for paragraph in content:
-                if isinstance(paragraph, dict):
-                    text_content.append(paragraph.get('text', ''))
-        all_text += "\n".join(text_content)
-        
-    # 4. 生成 word frequency
-    stop_words = set(['i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 'herself', 'it', 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 'which', 'who', 'whom', 'this', 'that', 'these', 'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'a', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't', 'can', 'will', 'just', 'don', 'should', 'now', 'd', 'll', 'm', 'o', 're', 've', 'y', 'ain', 'aren', 'couldn', 'didn', 'doesn', 'hadn', 'hasn', 'haven', 'isn', 'ma', 'mightn', 'mustn', 'needn', 'shan', 'shouldn', 'wasn', 'weren', 'won', 'wouldn'])
-    word_counts = defaultdict(int)
+def get_stopwords():
+    """定义停用词集合"""
+    # 基础停用词
+    from nltk.corpus import stopwords
+    from stopword import additional_stopwords
+    # 添加自定义停用词
+    custom_stopwords = additional_stopwords.copy()
+    custom_stopwords.update(set(stopwords.words('english')))
+    return custom_stopwords
 
+def main():
+    args = parse_args()
+    
+    # 构建路径
+    input_path = os.path.join('output', args.title, args.subtitle, 'data.json')
+    output_processed_path = os.path.join('output', args.title, args.subtitle, 'data_processed.json')
+    
+    logger.info(f"正在处理数据: {input_path}")
+    
+    # 1. 使用 load_data 加载数据 (自动处理 content 里的 JSON 字符串)
+    df = load_data(input_path)
+    
+    if df.empty:
+        logger.error("数据为空或无法加载，退出。")
+        return
+
+    # 2. 数据处理
+    logger.info("正在执行字段拆分和清洗...")
+    
+    # 拆分 Originator
+    df['Originator_split'] = df['Originator'].apply(split_originator)
+    
+    # 3. 词频统计 (基于 full_text)
+    logger.info("正在计算词频...")
+    all_text = " ".join(df['full_text'].dropna().astype(str).tolist())
+    
+    # 简单的正则分词
     words = re.findall(r'\b[a-z]{2,}\b', all_text.lower())
+    
+    stop_words = get_stopwords()
+    word_counts = defaultdict(int)
+    
     for word in words:
         if word not in stop_words:
             word_counts[word] += 1
             
     sorted_word_counts = sorted(word_counts.items(), key=lambda item: item[1], reverse=True)
 
-    # 打印结果
-    print("--- 词频 (Top 30) ---")
+    # 打印 Top 30 词频
+    print("\n--- 词频统计 (Top 30) ---")
     for word, count in sorted_word_counts[:30]:
         print(f"{word}: {count}")
 
-    print("\n--- 已处理的数据 (前3条) ---")
-    output_data_sample = []
-    for item in data[:3]:
-        output_item = {
-            "Date": item.get("Date"),
-            "Symbol": item.get("Symbol"),
-            "Title": item.get("Title"),
-            "Originator": item.get("Originator"),
-            "Originator_split": item.get("Originator_split"),
-            "related_document_split": item.get("related_document_split"),
-            "summary_text": item.get("summary", {}).get("text"),
-        }
-        output_data_sample.append(output_item)
+    # 4. 保存处理后的数据
+    # 将 DataFrame 转换回字典列表以便保存为 JSON
+    # 注意：pandas 的 to_json 可能不会完美保留原有嵌套结构，
+    # 这里我们构建一个新的 dict 列表，保留关键字段用于前端或后续使用
     
-    print(json.dumps(output_data_sample, indent=2, ensure_ascii=False))
+    output_records = df.to_dict(orient='records')
     
-    # 将完整处理过的数据保存到新文件
-    with open(PROCESSED_JSON_PATH, 'w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-    print(f"\n完整处理过的数据已保存到 {PROCESSED_JSON_PATH} 文件中。")
+    # 清理一下不需要的大文本字段（如果需要减小文件体积），或者保留
+    # 这里选择保留并添加处理后的字段
+    
+    with open(output_processed_path, 'w', encoding='utf-8') as f:
+        json.dump(output_records, f, ensure_ascii=False, indent=4)
+        
+    logger.info(f"\n处理完成！已保存至: {output_processed_path}")
+    
+    # 打印样本数据预览
+    print("\n--- 处理后数据样本 (前1条) ---")
+    if output_records:
+        sample = output_records[0].copy()
+        # 截断长文本以便打印预览
+        if sample.get('full_text'):
+            sample['full_text'] = sample['full_text'][:100] + "..."
+        print(json.dumps(sample, indent=2, ensure_ascii=False))
 
-
-except FileNotFoundError:
-    print(f"错误：找不到 {OUTPUT_JSON_PATH} 文件。请确保该文件与脚本位于同一目录中。")
-except Exception as e:
-    print(f"发生错误：{e}")
+if __name__ == "__main__":
+    main()

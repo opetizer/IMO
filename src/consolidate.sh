@@ -22,7 +22,7 @@ echo "Top N per chart: $TOP_N"
 python src/visualize_trends.py \
     --csv_path "$CSV_PATH" \
     --output_path "$OUTPUT_PATH" \
-    --keywords ghg lng oil gas fuel carbon_intensity ghg_intensity ghg_reduction \
+    --keywords ghg bwms cii wind_propulsion \
 && \
 
 echo "Visualization done! Dashboard chart saved to $OUTPUT_PATH"

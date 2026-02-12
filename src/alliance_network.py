@@ -28,8 +28,8 @@ from json_read import load_data
 # ───────────────────── helpers ─────────────────────
 
 def natural_sort_key(name):
-    m = re.search(r"(\d+)", name)
-    return int(m.group(1)) if m else name
+    m = re.search(r"(\d+)", str(name))
+    return (0, int(m.group(1))) if m else (1, str(name))
 
 
 def find_meeting_dirs(base_folder):

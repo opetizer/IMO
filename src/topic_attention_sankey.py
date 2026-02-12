@@ -36,12 +36,13 @@ def natural_meeting_sort_key(name):
 
 
 def find_meeting_dirs(base_folder):
-    """Find all meeting subdirectories containing data.json"""
+    """Find all meeting subdirectories containing data_parsed.json or data.json"""
     items = []
     for entry in os.listdir(base_folder):
         path = os.path.join(base_folder, entry)
         if os.path.isdir(path):
-            if os.path.exists(os.path.join(path, 'data.json')):
+            if os.path.exists(os.path.join(path, 'data_parsed.json')) or \
+               os.path.exists(os.path.join(path, 'data.json')):
                 items.append(entry)
     items_sorted = sorted(items, key=natural_meeting_sort_key)
     return items_sorted
@@ -483,8 +484,7 @@ def build_per_country_sankey(meetings_ordered, counts, country, top_titles, out_
                         link_colors.append(color.replace('rgb(', 'rgba(').replace(')', ',0.4)'))
                     elif 'rgba(' in color:
                         # Replace alpha
-                        import re as _re
-                        link_colors.append(_re.sub(r',\s*[\d.]+\)$', ',0.4)', color))
+                        link_colors.append(re.sub(r',\s*[\d.]+\)$', ',0.4)', color))
                     else:
                         link_colors.append('rgba(100, 100, 100, 0.4)')
 

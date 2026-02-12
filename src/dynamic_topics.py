@@ -12,6 +12,7 @@ Outputs:
 """
 
 import os
+import re
 import json
 import argparse
 from collections import defaultdict
@@ -47,7 +48,6 @@ def load_data(committee, base_dir="output"):
 
 def extract_meeting_number(meeting_str, committee):
     """Extract numeric session from meeting string for ordering."""
-    import re
     prefix = committee.split('-')[0]
     m = re.search(rf'{prefix}\s*(\d+)', str(meeting_str))
     if m:

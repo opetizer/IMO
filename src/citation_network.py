@@ -19,7 +19,6 @@ import re
 import json
 import argparse
 from collections import defaultdict, Counter
-from itertools import combinations
 
 import numpy as np
 import pandas as pd
@@ -268,27 +267,28 @@ def find_evolution_chains(G, docs, min_chain_length=3):
                     })
 
     # Also find chains via direct citation paths (not limited by title)
-    # Find longest paths in citation graph
-    for node in G.nodes():
-        if G.in_degree(node) == 0 and G.out_degree(node) > 0:
-            # This is a "root" citing document - trace forward
-            for target in G.nodes():
-                if G.in_degree(target) > 0 and G.out_degree(target) == 0:
-                    try:
-                        paths = list(nx.all_simple_paths(G, node, target, cutoff=8))
-                        for path in paths:
-                            if len(path) >= min_chain_length:
-                                chain_key = tuple(path)
-                                if chain_key not in visited_chains:
-                                    visited_chains.add(chain_key)
-                                    chains.append({
-                                        'title': '(citation chain)',
-                                        'length': len(path),
-                                        'documents': path,
-                                        'sessions': [G.nodes[s].get('meeting', '') for s in path],
-                                    })
-                    except nx.NetworkXError:
-                        pass
+    # Limit search to avoid O(N²) explosion on large graphs
+    roots = [n for n in G.nodes() if G.in_degree(n) == 0 and G.out_degree(n) > 0]
+    leaves = set(n for n in G.nodes() if G.in_degree(n) > 0 and G.out_degree(n) == 0)
+    
+    # Only search from a sample of roots to avoid excessive computation
+    max_roots = 100
+    for node in roots[:max_roots]:
+        try:
+            # Use cutoff to limit path length and search only reachable leaves
+            for path in nx.all_simple_paths(G, node, leaves & nx.descendants(G, node), cutoff=8):
+                if len(path) >= min_chain_length:
+                    chain_key = tuple(path)
+                    if chain_key not in visited_chains:
+                        visited_chains.add(chain_key)
+                        chains.append({
+                            'title': '(citation chain)',
+                            'length': len(path),
+                            'documents': path,
+                            'sessions': [G.nodes[s].get('meeting', '') for s in path],
+                        })
+        except nx.NetworkXError:
+            pass
 
     chains.sort(key=lambda c: c['length'], reverse=True)
     return chains[:50]  # Top 50 chains

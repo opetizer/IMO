@@ -93,7 +93,7 @@ IMO_STOPWORDS = {
     'organization', 'sub', 'ref', 'attached', 'related', 'submitted',
     'following', 'accordance', 'regard', 'relevant', 'associated',
     'concerning', 'assembly', 'recognized', 'appropriate', 'general',
-    'particular', 'provisions', 'accordance', 'request', 'action',
+    'particular', 'provisions', 'request', 'action',
     'may', 'shall', 'also', 'would', 'could', 'should', 'one',
     'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
     'mepc', 'msc', 'ccc', 'sse', 'iswg', 'ghg', 'inf', 'wp',
@@ -214,6 +214,10 @@ def build_bertopic_model(docs, min_topic_size=10, embedding_model_name='all-Mini
     )
 
     topics, probs = topic_model.fit_transform(texts, embeddings)
+
+    # Ensure topics is a list for consistent .count() usage
+    if not isinstance(topics, list):
+        topics = list(topics)
 
     return topic_model, topics, probs, embeddings
 
@@ -392,6 +396,7 @@ def save_visualizations(topic_model, docs, topics, probs, embeddings,
             print(f'  Warning: country-topic heatmap failed: {e}')
 
     # 9. Save document-topic assignments
+    topic_name_map = {row['Topic']: row['Name'] for _, row in topic_info.iterrows()}
     assignments = []
     for i, (doc, topic_id) in enumerate(zip(docs, topics)):
         assignments.append({
@@ -400,7 +405,7 @@ def save_visualizations(topic_model, docs, topics, probs, embeddings,
             'title': doc['title'],
             'originator': doc['originator'],
             'topic_id': topic_id,
-            'topic_name': topic_model.get_topic_info().set_index('Topic').get(topic_id, {}).get('Name', ''),
+            'topic_name': topic_name_map.get(topic_id, f'Topic {topic_id}'),
         })
     pd.DataFrame(assignments).to_csv(
         os.path.join(out_folder, f'bertopic_assignments_{prefix}.csv'),
@@ -419,8 +424,8 @@ def save_analysis(topic_model, docs, topics, country_df, out_path, prefix):
         'summary': {
             'total_documents': len(docs),
             'total_topics': len(set(topics)) - (1 if -1 in topics else 0),
-            'outliers': topics.count(-1) if isinstance(topics, list) else int((np.array(topics) == -1).sum()),
-            'outlier_rate': round((topics.count(-1) if isinstance(topics, list) else int((np.array(topics) == -1).sum())) / len(docs), 4),
+            'outliers': topics.count(-1),
+            'outlier_rate': round(topics.count(-1) / max(len(docs), 1), 4),
         },
         'topics': [],
         'meeting_distribution': {},
@@ -510,8 +515,8 @@ def main():
         nr_topics=nr_topics,
     )
     n_topics = len(set(topics)) - (1 if -1 in topics else 0)
-    n_outliers = topics.count(-1) if isinstance(topics, list) else int((np.array(topics) == -1).sum())
-    print(f'  Found {n_topics} topics, {n_outliers} outliers ({n_outliers/len(docs)*100:.1f}%)')
+    n_outliers = topics.count(-1)
+    print(f'  Found {n_topics} topics, {n_outliers} outliers ({n_outliers/max(len(docs),1)*100:.1f}%)')
 
     # ── Step 3: Dynamic topics ──
     topics_over_time = None

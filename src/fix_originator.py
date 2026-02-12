@@ -11,7 +11,6 @@ import os
 import re
 import json
 import argparse
-from collections import Counter
 
 
 def extract_from_filename(filename):

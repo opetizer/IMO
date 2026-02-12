@@ -348,7 +348,7 @@ def build_cosponsor_network(all_data, out_dir):
     pos = nx.spring_layout(G, k=3, seed=42, weight='weight', iterations=50)
     
     # Edges
-    edge_x, edge_y, edge_text = [], [], []
+    edge_x, edge_y = [], []
     for u, v, d in G.edges(data=True):
         x0, y0 = pos[u]
         x1, y1 = pos[v]
@@ -485,7 +485,6 @@ def build_policy_nexus(all_data, cross_pairs, country_df, out_dir):
     
     # Draw
     edge_x, edge_y = [], []
-    edge_colors = []
     for u, v, d in G.edges(data=True):
         x0, y0 = pos[u]
         x1, y1 = pos[v]

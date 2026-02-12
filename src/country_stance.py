@@ -18,10 +18,10 @@ Usage:
 """
 
 import os
+import re
 import json
 import argparse
 from collections import defaultdict, Counter
-from itertools import combinations
 
 import numpy as np
 import pandas as pd
@@ -65,17 +65,20 @@ def split_originators(originator_str):
     """Split multi-originator strings into individual entities."""
     if pd.isna(originator_str):
         return []
-    # Common delimiters in IMO docs
+    originator_str = str(originator_str).strip()
+    if not originator_str:
+        return []
+    # Split by semicolons first, then by commas and 'and' within each part
+    parts = re.split(r'\s*;\s*', originator_str)
     origs = []
-    for sep in [';', ',', ' and ', ' et al.']:
-        if sep in originator_str:
-            parts = originator_str.split(sep)
-            for p in parts:
-                p = p.strip().strip('.')
-                if p and p.lower() not in ['et al', '']:
-                    origs.append(p)
-            return origs
-    return [originator_str.strip()]
+    for part in parts:
+        # Further split by ', and ', ' and ', ','
+        subparts = re.split(r',\s*(?:and\s+)?|\s+and\s+', part)
+        for p in subparts:
+            p = p.strip().strip('.')
+            if p and p.lower() not in ['et al', '']:
+                origs.append(p)
+    return origs
 
 
 def normalize_country(name):
@@ -225,14 +228,20 @@ def plot_country_topic_heatmap(matrix, topic_map, committee, out_dir, top_n=25):
     print(f"  Saved: {path}")
 
 
-def plot_country_similarity_network(sim_df, committee, out_dir, threshold=0.3, top_n=25):
+def plot_country_similarity_network(sim_df, committee, out_dir, threshold=0.3, top_n=25, matrix=None):
     """Network graph of country similarity."""
     if sim_df.empty:
         return
     
-    # Use only top N countries
-    total_docs = sim_df.sum(axis=1)
-    top = total_docs.nlargest(top_n).index
+    # Use only top N countries — rank by total docs from original matrix if available
+    if matrix is not None and not matrix.empty:
+        top = matrix.sum(axis=1).nlargest(top_n).index
+        # Only keep countries that exist in sim_df
+        top = [c for c in top if c in sim_df.index]
+    else:
+        # Fallback: use weighted degree (sum of similarities) as proxy
+        total_sim = sim_df.sum(axis=1)
+        top = total_sim.nlargest(top_n).index.tolist()
     sim_sub = sim_df.loc[top, top]
     
     G = nx.Graph()
@@ -591,7 +600,7 @@ def main():
         plot_country_topic_heatmap(matrix, topic_map, committee, comm_out, top_n=args.top_n)
         
         print(f"  [2/5] Country Similarity Network...")
-        plot_country_similarity_network(sim_df, committee, comm_out, top_n=args.top_n)
+        plot_country_similarity_network(sim_df, committee, comm_out, top_n=args.top_n, matrix=matrix)
         
         print(f"  [3/5] Country Focus Radar...")
         plot_country_radar(matrix, topic_map, committee, comm_out, focus_countries=focus)

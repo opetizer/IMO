@@ -15,7 +15,7 @@ def download_json(url):
 
 def download_and_modify_json(url, local_filename, modifications):
     if os.path.exists(local_filename):
-        data = json.load(open(local_filename))
+        data = json.load(open(local_filename, encoding='utf-8'))
         config_version = data.get('config_version', '0.0.0')
         if config_version < '1.2.0':
             data = download_json(url)

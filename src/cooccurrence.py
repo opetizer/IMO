@@ -25,7 +25,7 @@ sns.set_theme(style="ticks", context="paper") # context="paper" 适合论文发�
 # 尝试设置中文字体
 try:
     plt.rcParams['font.sans-serif'] = ['SimHei', 'Arial Unicode MS', 'Microsoft YaHei', 'sans-serif']
-except:
+except Exception:
     pass
 plt.rcParams['axes.unicode_minus'] = False
 plt.rcParams['pdf.fonttype'] = 42 # 确保导出PDF时文字可编辑
@@ -74,7 +74,7 @@ def setup_logger(log_file):
     if logger.hasHandlers():
         logger.handlers.clear()
     logger.setLevel(logging.INFO)
-    file_handler = logging.FileHandler(log_file, mode='w')
+    file_handler = logging.FileHandler(log_file, mode='w', encoding='utf-8')
     file_handler.setLevel(logging.INFO)
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.INFO)
@@ -215,8 +215,9 @@ def draw_graph(G, out_file, title_text, subtitle_text=None):
     texts_local = []
     for node, (x, y) in pos_local.items():
         n_size = G.nodes[node]['size']
-        if len(node_sizes_raw) > 0:
-            font_size = 9 + (n_size - node_sizes_raw.min()) / (node_sizes_raw.max() - node_sizes_raw.min()) * 6
+        size_range = node_sizes_raw.max() - node_sizes_raw.min()
+        if len(node_sizes_raw) > 0 and size_range > 0:
+            font_size = 9 + (n_size - node_sizes_raw.min()) / size_range * 6
         else:
             font_size = 10
         texts_local.append(plt.text(x, y, node.replace('_', ' '), fontsize=font_size,

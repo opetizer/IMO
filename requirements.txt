@@ -1,5 +1,6 @@
 # Data Analysis and Manipulation
 numpy
+pandas
 scikit-learn
 openpyxl
 pymupdf

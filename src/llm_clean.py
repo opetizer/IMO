@@ -27,7 +27,7 @@ def clean_text(text):
     """Basic regex cleaning."""
     text = re.sub(r'\d{1,2}:\d{2}(:\d{2})?', '', text)
     text = re.sub(r'\d{4}-\d{1,2}-\d{1,2}( \d{1,2}:\d{2}(:\d{2})?)?', '', text)
-    text = re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9，。！？、；：""''（）《》【】,.!?;:"\'()\[\]<> \n]', '', text)
+    text = re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9，。！？、；：\u201c\u201d\u2018\u2019（）《》【】,.!?;:"\'\(\)\[\]<> \n]', '', text)
     text = re.sub(r'[ \t]+', ' ', text)
     text = re.sub(r'\n+', '\n', text)
     text = '\n'.join(line.strip() for line in text.splitlines())
@@ -99,7 +99,9 @@ def ollama_clean(input_path, output_path):
         print("Warning: Cleaned text is empty, check input file.")
         return
 
-    os.makedirs(os.path.dirname(output_path), exist_ok=True) if os.path.dirname(output_path) else None
+    output_dir = os.path.dirname(output_path)
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(cleaned_text)
     

@@ -1,364 +1,297 @@
-## 使用说明
+# IMO 会议提案文本挖掘与政策分析系统
 
-本项目为 IMO 相关的研究资料整理与分享。
+**IMO Meeting Proposal Text Mining and Policy Analysis System**
 
-## 目录结构
+基于国际海事组织（IMO）五大委员会/工作组的 2,523 篇会议提案文档，综合运用 BERTopic 主题建模、引用网络分析、共同提案联盟挖掘、政策立场检测等方法，系统性分析国际海事治理中的议题演化、国家参与模式与跨委员会政策关联。
 
-- `src/`：源代码文件夹
- - json_read.py: 通用数据读取模块，处理嵌套 JSON 和 Markdown 格式。
- - cooccurrence.py: 关键词共现网络分析（SCI 绘图风格）。
- - json_process.py: 数据清洗与词频统计工具。
- - parse_data.py: 文档解析与清洗模块。
- - api_clean.py: 大模型 API 调用模块。
- - validate_json.py: 数据验证模块。
- - html_vis.py: HTML 文档可视化模块。
- - merge_data.py: 数据合并模块。
- - stopwords.py: 停用词模块。
- - topic.py: 主题建模模块。
- - consolidate.py: 数据量化分析模块。
- - sankey_trends.py: 单一议题的文档流向桑基图可视化。
- - topic_attention_sankey.py: 多议题/多国家关注度时序变化桑基图。
- - alliance_network.py: 国家/组织联合提案共现网络分析（Louvain社群发现）。
- - citation_network.py: 文档引用网络 + TF-IDF相似度聚类 + 提案演化链追踪。
+> A comprehensive text mining and policy analysis framework for 2,523 IMO meeting proposals across five committees/working groups (MEPC, MSC, CCC, SSE, ISWG-GHG), employing BERTopic modeling, citation network analysis, co-sponsorship alliance detection, and policy stance classification.
 
-- `data/`：数据文件夹
-- `readme.md`：项目说明文件
+---
 
-`data`文件夹结构如图所示：
+## 📊 数据规模
+
+| 委员会/工作组 | 会议届次 | 文档数 | 主题数 | 离群率 |
+|:---:|:---:|:---:|:---:|:---:|
+| MEPC（海洋环境保护委员会） | 77–83 | 856 | 11 | 14.7% |
+| MSC（海上安全委员会） | 102–109 | 837 | 37 | 17.8% |
+| CCC（货物运输分委会） | 7–10 | 396 | 19 | 16.4% |
+| SSE（船舶系统与设备分委会） | 7–11 | 349 | 12 | 12.9% |
+| ISWG-GHG（温室气体减排工作组） | 16–18 | 85 | 9 | 22.4% |
+| **合计** | — | **2,523** | **88** | — |
+
+---
+
+## 📁 目录结构
+
 ```
-data/
-└── conference_name/
-	├── session1/
-	│   ├── paper1.pdf
-	│   ├── paper2.pdf
-	│   └── ...
+IMO/
+├── src/                          # 源代码
+│   ├── parse_data.py             # PDF文档解析与文本提取
+│   ├── parse_all_meetings.py     # 批量解析所有会议
+│   ├── api_clean.py              # LLM结构化元数据提取 (Qwen)
+│   ├── llm_clean.py              # LLM结构化元数据提取 (Claude)
+│   ├── validate_json.py          # 数据验证
+│   ├── json_read.py              # 通用数据读取模块
+│   ├── json_process.py           # 数据清洗与后处理
+│   ├── extract_metadata.py       # 元数据提取
+│   ├── merge_data.py             # 数据合并
+│   ├── fix_originator.py         # Originator字段修复
+│   ├── fix_dates.py              # 日期格式修复
+│   ├── stopword.py               # 海事领域停用词
+│   ├── download_models.py        # 预训练模型下载
+│   ├── bertopic_model.py         # BERTopic主题建模 ★核心
+│   ├── country_stance.py         # 国家/组织参与模式与议题偏好
+│   ├── alliance_network.py       # 共同提案网络 (Louvain社群发现)
+│   ├── citation_network.py       # 引用网络 + TF-IDF相似度 + 演化链
+│   ├── dynamic_topics.py         # 动态主题演化趋势
+│   ├── cross_committee_deep.py   # 跨委员会深度对比分析
+│   ├── cooccurrence.py           # 关键词共现网络
+│   ├── sankey_trends.py          # 桑基图可视化（单议题流向）
+│   ├── topic_attention_sankey.py # 桑基图可视化（多维关注度）
+│   ├── html_vis.py               # HTML交互式可视化
+│   ├── consolidate.py            # 数据量化整合
+│   ├── visualize_trends.py       # 趋势可视化
+│   ├── topic.py                  # [legacy] 早期LDA主题建模
+│   ├── cmp.py                    # [legacy] 空文件
+│   └── extracted.py              # [legacy] 早期提取脚本
+│
+├── data/                         # 原始PDF文档
+│   └── {委员会}/
+│       └── {会议届次}/
+│           ├── Index.htm         # 会议文档索引
+│           └── *.pdf             # 提案PDF文件
+│
+├── output/                       # 分析输出
+│   ├── {委员会}/
+│   │   ├── bertopic/             # BERTopic模型、主题CSV、交互式HTML
+│   │   ├── alliance/             # 联盟网络统计JSON
+│   │   ├── citation/             # 引用网络分析结果
+│   │   └── {会议届次}/           # 各会议的解析数据
+│   ├── stance_analysis/          # 5个委员会的国家参与分析
+│   ├── dynamic_analysis/         # 动态趋势分析报告
+│   ├── deep_analysis/            # 跨委员会分析（相似度矩阵、协作网络）
+│   ├── llm_topic_labels.json     # 88个主题的LLM中英文标签
+│   ├── all_proposals_metadata.csv/xlsx  # 全量元数据汇总
+│   └── ISWG-GHG/
+│       └── stance_detection_results.json  # 政策立场检测结果
+│
+├── imo/                          # Python虚拟环境
+├── requirements.txt              # 依赖清单
+├── readme.md                     # 本文件
+└── 研究日志.md                    # 研究过程日志
 ```
-`output`文件夹结构如图所示：
-```
-output/
-└── conference_name/
-	├── session1/
-	│   ├── data.json           # 原始结构化数据
-	│   ├── data_processed.json # 清洗后的扁平化数据
-	│   ├── word_freq.json      # 词频统计
-	|   └── cooccurrence_graph.png # 共现网络图
-	└── sankey/                 # 桑基图可视化输出
-		│   ├── Sankey_MEPC_{议题名}.html        # 按议题分类的桑基图
-		│   ├── Sankey_MEPC_{国家名}.html        # 按国家分类的桑基图
-		│   ├── sankey_{议题名}.html             # 单议题文档流向图
-		│   └── sankey_metadata.json             # 桑基图元数据
-```	
 
-## 使用方法
+---
 
-### 下载并安装项目依赖
+## 🛠 技术栈与依赖
 
-1. 克隆项目到本地：
+### 核心框架
+
+| 类别 | 工具/库 | 用途 |
+|:---|:---|:---|
+| 主题建模 | BERTopic, sentence-transformers, UMAP, HDBSCAN | 基于Transformer的主题发现 |
+| 网络分析 | NetworkX, python-louvain | 引用/联盟网络构建与社群发现 |
+| NLP/ML | scikit-learn, TF-IDF | 文本向量化、相似度计算、聚类 |
+| 可视化 | Plotly, Matplotlib | 交互式图表与学术图表 |
+| 数据处理 | Pandas, NumPy | 结构化数据处理 |
+| PDF解析 | PyMuPDF (fitz) | PDF文本提取 |
+| LLM集成 | OpenAI SDK (Qwen/Claude) | 结构化信息提取、主题标签、立场检测 |
+| 文档生成 | python-docx | Word文档生成 |
+
+### 环境配置
+
 ```bash
-git clone https://github.com/imo-ai/imo-data.git
-```
+# 1. 创建虚拟环境
+python -m venv imo
 
-2. 安装项目依赖：
-```
+# 2. 激活虚拟环境
+# Windows:
+imo\Scripts\activate
+# Linux/Mac:
+source imo/bin/activate
+
+# 3. 安装依赖
 pip install -r requirements.txt
+
+# 4. 下载预训练模型（sentence-transformers）
+python src/download_models.py
 ```
 
-3. 将会议数据放置在 `data` 文件夹下。
+### 环境变量
 
-### 环境变量设置
-
-系统使用云端大模型（默认为 Qwen/通义千问）进行文档清洗，必须在运行前配置环境变量：
-[Linux/Mac]
-```bash
-export QWEN_API_KEY="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-export QWEN_BASE_URL="[https://api.qwen.ai/v1/chat/completions](https://api.qwen.ai/v1/chat/completions)"
-```
-
-[Windows PowerShell]
-```shell
-$env:QWEN_API_KEY="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-$env:QWEN_BASE_URL="[https://api.qwen.ai/v1/chat/completions](https://api.qwen.ai/v1/chat/completions)"
-```
-
-### 智能解析与清洗模块 (Parsing & Cleaning)
-
-对应脚本: `src/parse_data.py, src/api_clean.py, src/validate_json.py， src/json_read.py`
-
-此模块负责将原始 PDF 文档转化为高质量的结构化数据。
-
-**算法流程**
-
-1. 索引读取: 解析 `Index.htm` 提取会议元数据（日期、Symbol、Title、Originator）。
-
-2. 文本提取: 使用 PyMuPDF (fitz) 提取 PDF 原始文本。
-
-3. 正则预清洗 (clean_text_regex):
-
-- 去除时间戳格式（如 12:34）。
-
-- 去除页码和无意义的特殊符号。
-
-- 压缩多余的空格和换行符。
-
-4. LLM 结构化提取 (llm_api_clean):
-
-- 调用大模型 API（如 qwen-plus）。
-
-- 使用 System Prompt 指导模型动态提取 Metadata（文档ID、会话、提交方）、Sections（摘要、正文、附件）和 Tables（Markdown格式表格）。
-
-- 输出: 标准化的 JSON 对象。
-
-5. 数据验证 (`validate_json.py`): 校验生成的 JSON 结构是否完整，字段类型是否正确。
-
-**使用示例**:
+系统使用云端大模型进行文档结构化提取，需配置 API 密钥：
 
 ```bash
-# 初始化并解析 MEPC 77 会议数据
-sh src/parse_initialize.sh 77
+# Qwen (通义千问) — 用于文档解析
+export QWEN_API_KEY="sk-xxxxxxxx"
+export QWEN_BASE_URL="https://api.qwen.ai/v1/chat/completions"
+
+# Claude — 用于立场检测（可选）
+export ANTHROPIC_API_KEY="sk-ant-xxxxxxxx"
 ```
 
-### 数据后处理与统计模块 (Data Processing)
+---
 
-对应脚本: `src/json_process.py`
+## 📋 模块功能说明
 
-在解析完成后，对数据进行进一步清洗和统计，生成更适合分析的扁平化数据。
+### 一、数据采集与解析
 
-**功能**:
+| 脚本 | 功能 |
+|:---|:---|
+| `parse_data.py` | 解析 `Index.htm` 提取元数据，使用 PyMuPDF 提取 PDF 文本，正则预清洗 |
+| `parse_all_meetings.py` | 批量遍历所有委员会/会议，调用 parse_data 进行全量解析 |
+| `api_clean.py` / `llm_clean.py` | 调用 Qwen/Claude API 进行 LLM 结构化提取（Metadata、Sections、Tables） |
+| `validate_json.py` | 校验生成的 JSON 结构完整性与字段类型 |
+| `json_read.py` / `json_process.py` | 数据读取、字段拆分（Originator多国拆分）、词频统计 |
+| `extract_metadata.py` | 元数据字段提取 |
+| `merge_data.py` | 多源数据合并 |
+| `fix_originator.py` | 从 PDF 文件名修复缺失的 Originator 字段 |
+| `fix_dates.py` | 日期格式标准化 |
+| `stopword.py` | 海事领域自定义停用词表 |
 
-字段拆分: 自动拆分 Originator 字段中的多个国家/组织（如 "China, Japan and Singapore" -> ["China", "Japan", "Singapore"]）。
+**数据处理流程：** PDF → PyMuPDF文本提取 → 正则预清洗 → LLM结构化 → JSON验证 → 后处理
 
-全文词频: 基于合并后的文档全文本（Full Text）计算词频，去除停用词。
+### 二、主题建模
 
-格式转换: 生成 `data_processed.json`。
+| 脚本 | 功能 |
+|:---|:---|
+| `bertopic_model.py` | **核心脚本。** 基于 BERTopic 的主题建模，使用 sentence-transformers 编码、UMAP 降维、HDBSCAN 聚类，自动发现文档主题结构。替代了早期 LDA 方案。 |
+| `dynamic_topics.py` | 分析主题随会议届次的动态演化，识别上升趋势与下降趋势主题 |
+| `topic.py` | [legacy] 早期 LDA 主题建模，已被 bertopic_model.py 替代 |
 
-**使用示例**：
+**BERTopic 流程：** 文档 → Sentence-BERT 编码 → UMAP 降维 → HDBSCAN 聚类 → c-TF-IDF 主题表示 → LLM 标签增强
+
+### 三、网络分析
+
+| 脚本 | 功能 |
+|:---|:---|
+| `country_stance.py` | 分析各国家/组织在不同委员会的提案数量、议题多样性（Shannon Entropy）、议题偏好 |
+| `alliance_network.py` | 基于共同提案关系构建合作网络，Louvain 社群发现识别联盟结构 |
+| `citation_network.py` | 正则提取文档间引用关系，构建有向引用网络，TF-IDF 相似度矩阵，层次聚类，演化链追踪 |
+| `cross_committee_deep.py` | 跨委员会主题相似度矩阵、桥接国家识别、政策关联分析 |
+| `cooccurrence.py` | TF-IDF 筛选关键词 → 滑动窗口共现矩阵 → Louvain 聚类着色 |
+
+### 四、可视化
+
+| 脚本 | 功能 |
+|:---|:---|
+| `sankey_trends.py` | 单议题文档流向桑基图（国家×会议） |
+| `topic_attention_sankey.py` | 多维关注度桑基图（按议题/按国家分组） |
+| `html_vis.py` | 交互式仪表盘（热力图、旭日图、气泡图） |
+| `consolidate.py` / `visualize_trends.py` | 跨会议词频整合与趋势折线图 |
+
+---
+
+## ▶️ 运行说明
+
+### 完整分析流程
 
 ```bash
-# 处理 MEPC 77 的数据
-sh src/json_process.sh 77
+# 1. 数据解析（以MEPC为例）
+python src/parse_data.py --committee MEPC --session 77
+
+# 2. 批量解析所有会议
+python src/parse_all_meetings.py
+
+# 3. LLM结构化提取
+python src/api_clean.py --input output/MEPC/77/data.json
+
+# 4. 数据验证与后处理
+python src/validate_json.py --input output/MEPC/77/data.json
+python src/json_process.py --input output/MEPC/77/data.json
+
+# 5. BERTopic主题建模
+python src/bertopic_model.py --committee MEPC
+
+# 6. 网络分析
+python src/alliance_network.py --committee MEPC
+python src/citation_network.py --committee MEPC
+python src/country_stance.py --committee MEPC
+
+# 7. 跨委员会分析
+python src/dynamic_topics.py
+python src/cross_committee_deep.py
+
+# 8. 可视化
+python src/sankey_trends.py --meeting_folder output/MEPC
+python src/topic_attention_sankey.py --meeting_folder output/MEPC
 ```
 
-### 主题建模模块 (Topic Modeling)
-
-对应脚本: `src/topic.py`
-
-基于 LDA (Latent Dirichlet Allocation) 算法，从文档集中发现隐藏的主题结构。
-
-**算法流程**
-
-1. 预处理:
-
-- 分词 (Tokenization) 与词性标注 (POS Tagging)。
-
-- 词形还原 (Lemmatization): 仅保留名词 (NN)，还原为词根形式。
-
-- 停用词过滤: 加载 nltk 停用词库及 `src/stopword.py` 中的自定义领域停用词。
-
-2. 短语检测 (Bigrams): 使用 gensim.models.Phrases 自动识别常用短语（如 "ghg_emission", "ballast_water"）。
-
-3. 语料构建:
-
-- 建立词典 (Dictionary) 并过滤极端词频（no_below=7, no_above=0.5）。
-
-- 构建词袋模型 (Bag-of-Words Corpus)。
-
-4. LDA 训练: 训练 LdaModel，生成 num_topics 个主题。
-
-5. 文档分类: 计算每篇文档属于各个主题的概率，确定其“主导主题 (Dominant Topic)”。
-
-**输出文件**
-
-- `topics_summary.txt`: 每个主题的关键词列表。
-
-- `document_topic_distribution.csv`: 文档-主题分布矩阵。
-
-**运行示例**:
-
-```bash
-# 对MEPC 77，运行 LDA 主题建模，保留 10 个主题
-sh src/topic.sh 77 10
-```
-
-### 关键词共现与网络分析 (Co-occurrence Network)
-
-对应脚本: `src/cooccurrence.py`
-
-构建关键词共现网络，可视化概念间的关联。
-
-**算法流程**
-
-1. TF-IDF 筛选: 计算文档集中词汇的 TF-IDF 值，选取 Top-K (默认 100) 关键词作为网络节点。
-
-2. 共现矩阵构建:
-
-- 使用滑动窗口 (Window Size = 5)。
-
-- 统计关键词对在同一窗口内出现的频率。
-
-3. 图构建 (Graph Construction):
-
-- 节点大小 $\propto$ 词频。
-
-- 边权重 $\propto$ 共现频率 (过滤掉权重低于阈值的边)。
-
-4. 社群发现 (Community Detection): 使用 Louvain 算法对网络节点进行聚类着色，识别语义群组。
-
-**输出文件**: `cooccurrence_graph.png` (网络图), `word_freq.json` (词频表)。
-
-**运行示例**:
-
-```bash
-# 对 MEPC 77 运行关键词共现分析
-sh src/cooccurrence.sh 77
-```
-
-### 趋势分析与可视化 (Trend Analysis & Visualization)
-
-对应脚本: `src/consolidate.py, src/visualize_trends.py, src/html_vis.py`
-
-分析会议主题随时间的变化趋势，并生成可视化报告。
-
-**算法流程**
-
-1. 数据整合 (consolidate.py):
-
-- 遍历不同会话文件夹（如 MEPC 77, MEPC 78...）。
-
-- 合并 word_freq.json，生成宽表格式的 CSV (trend_analysis.csv)。
-
-2. 趋势绘图 (visualize_trends.py):
-
-- 读取整合后的 CSV。
-
-- 归一化 (可选): 使用 MinMaxScaler 将不同量级的词频缩放到 [0, 1] 区间，便于对比趋势形态。
-
-- 绘制多关键词的时间序列折线图。
-
-3. 交互式仪表盘 (html_vis.py):
-
-- 基于 pandas 和 plotly生成 热力图 (国家 vs 议题)、旭日图 (议题层级分布) 和 气泡图 (参与度分析)。
-
-**输出文件**: `trend_analysis.csv` (趋势数据), `trend_analysis.html` (交互式仪表盘)。
-
-**运行示例**:
-
-```bash
-# 对 MEPC 77 运行趋势分析
-sh src/consolidate.sh 77
-```
-
-### 桑基图可视化 (Sankey Diagram Visualization)
-
-对应脚本: `src/sankey_trends.py, src/topic_attention_sankey.py`
-
-生成桑基图以展示议题关注度随时间的演变和国家参与度的变化。
-
-#### 1. 单一议题文档流向桑基图 (sankey_trends.py)
-
-为每个热点议题生成独立的桑基图，展示不同国家在该议题上的文档流向。
-
-**算法流程**
-
-1. 数据聚合:
-   - 遍历所有会议文件夹（如 MEPC 77-83）
-   - 统计每个议题在每个会议、每个国家的文档数量
-   - 筛选出热点议题（按文档总量排序）
-
-2. 节点构建:
-   - 横轴：会议按时间顺序排列
-   - 节点：每个会议中的国家节点（格式："{会议} - {国家}"）
-   - 节点大小：基于文档数量进行全局缩放
-
-3. 连线构建:
-   - 相邻会议间，相同国家的议题文档流向
-   - 流向值 = min(上次会议文档数, 本次会议文档数)
-
-4. 可视化:
-   - 使用 Plotly Sankey 生成交互式 HTML
-   - 支持悬停查看详细信息
-   - 颜色区分不同国家
-
-**输出文件**: `sankey_{议题名}.html` (每个议题一个文件)
-
-**运行示例**:
-```bash
-# 生成前6个热点议题的桑基图
-python src/sankey_trends.py --meeting_folder "output/MEPC" --top_k_titles 6 --top_n_countries 8
-
-# 使用归一化和最小流向方法
-python src/sankey_trends.py --meeting_folder "output/MEPC" --normalize --flow_method min
-```
-
-#### 2. 多维度关注度桑基图 (topic_attention_sankey.py)
-
-为每个议题和每个国家分别生成独立的桑基图，从多角度分析关注度变化。
-
-**算法流程**
-
-1. 热点识别:
-   - 统计所有议题的文档总量，选出 Top-N 热点议题
-   - 统计所有国家的文档总量，选出 Top-N 活跃国家
-
-2. 按议题分类 (Per-Title Sankey):
-   - 为每个热点议题生成一个桑基图
-   - 横轴：会议时间序列
-   - 节点：参与该议题的国家
-   - 展示：不同国家对该议题的关注度演变
-
-3. 按国家分类 (Per-Country Sankey):
-   - 为每个活跃国家生成一个桑基图
-   - 横轴：会议时间序列
-   - 节点：该国关注的热点议题
-   - 展示：该国对不同议题的关注度分布
-
-4. 节点定位:
-   - 全局最大文档数用于节点高度缩放
-   - 节点位置反映实际文档数量差异
-   - 同一会议内的节点按文档量排序
-
-**输出文件**:
-- 议题图：`Sankey_{会议类型}_{议题名}.html`
-- 国家图：`Sankey_{会议类型}_{国家名}.html`
-- 元数据：`sankey_metadata.json`
-
-**运行示例**:
-```bash
-# 生成前5个议题和前8个国家的桑基图
-python src/topic_attention_sankey.py --meeting_folder "output/MEPC" --top_n_titles 5 --top_n_countries 8
-
-# 设置最小文档数阈值
-python src/topic_attention_sankey.py --meeting_folder "output/MEPC" --min_count 2
-```
-
-**可视化特点**
-
-- 节点高度：反映文档数量（关注度）
-- 连线透明度：表示流向强度
-- 颜色编码：区分国家/议题
-- 交互式：悬停显示详细信息
-
-**参数说明**
-
-| 参数 | sankey_trends.py | topic_attention_sankey.py | 默认值 | 说明 |
-|------|-----------------|--------------------------|--------|------|
-| `--meeting_folder` | ✓ | ✓ | 必需 | 会议文件夹路径 |
-| `--top_n_titles` / `--top_k_titles` | ✓ | ✓ | 5/6 | 显示的议题数量 |
-| `--top_n_countries` | ✓ | ✓ | 8 | 显示的国家数量 |
-| `--min_count` / `--min_total_count` | ✓ | ✓ | 1 | 最小文档数阈值 |
-| `--normalize` | ✓ | - | False | 是否归一化为百分比 |
-| `--flow_method` | ✓ | - | min | 流向计算方法 (min/avg/next) |
-| `--out_folder` | ✓ | ✓ | auto | 输出文件夹 |
+---
+
+## 📈 关键结果摘要
+
+### BERTopic 主题建模
+- 5 个委员会共发现 **88 个主题**，LLM 生成中英文标签
+- MEPC 以 GHG 减排、压载水管理、防污染为核心
+- MSC 主题最丰富（37 个），涵盖海上安全各细分领域
+
+### 引用网络
+- MEPC 最长引用演化链：**30 篇文档**（压载水管理方向）
+- 最高被引文档：**MEPC 80/17**（38 次被引）
+
+### 国家参与
+- 中国提案分布：MEPC 45 篇, MSC 56 篇, CCC 30 篇, SSE 59 篇（排名第一）, ISWG-GHG 9 篇
+- 跨委员会实体重叠最高：SSE-ISWG-GHG（Jaccard 相似度 0.556）
+
+### Originator 数据覆盖率
+- MEPC 100%, MSC 95.8%, CCC 96.7%, SSE 97.7%, ISWG-GHG 100%
+
+### ISWG-GHG 政策立场检测
+- GFS（全球燃油标准）29.4%, IMSF&F（IMO基金与融资）17.6%, Emissions Pricing（排放定价）17.6%
+
+---
+
+## 📂 输出文件说明
+
+| 输出路径 | 内容 |
+|:---|:---|
+| `output/{委员会}/bertopic/` | BERTopic 模型文件、主题词 CSV、交互式 HTML 可视化 |
+| `output/{委员会}/alliance/` | 联盟网络统计 JSON、网络图 |
+| `output/{委员会}/citation/` | 引用网络分析 JSON、交互式引用图、相似度热力图 |
+| `output/{委员会}/{届次}/` | 各会议的解析 JSON、词频统计 |
+| `output/stance_analysis/` | 5 个委员会的国家参与 CSV 报告 + 交互式 HTML |
+| `output/dynamic_analysis/` | 主题动态趋势报告 |
+| `output/deep_analysis/` | 跨委员会相似度矩阵、协作网络、政策关联 |
+| `output/llm_topic_labels.json` | 88 个主题的 LLM 生成中英文标签 |
+| `output/all_proposals_metadata.csv/.xlsx` | 2,523 篇提案全量元数据 |
+| `output/ISWG-GHG/stance_detection_results.json` | ISWG-GHG 85 篇提案的政策立场分类 |
+
+---
+
+## 📝 论文图表
+
+本项目支撑毕业论文的 8 张 300DPI SCI 风格图表（生成脚本：`gen_thesis_figures_v2.py`）：
+
+| 图号 | 文件名 | 内容 |
+|:---|:---|:---|
+| 图2-1 | `fig2-1_technical_roadmap.png` | 技术路线图 |
+| 图3-1 | `fig3-1_topic_distribution.png` | 委员会主题分布（文档数+主题数+离群率） |
+| 图3-2 | `fig3-2_mepc_top10.png` | MEPC 前10活跃实体+多样性指数 |
+| 图3-3 | `fig3-3_china_crosscommittee.png` | 中国跨委员会提案数+多样性 |
+| 图3-4 | `fig3-4_mepc_alliance.png` | MEPC 共同提案 Top15 对（社群着色） |
+| 图3-5 | `fig3-5_iswg_stance.png` | ISWG-GHG 政策立场分布+会议间演变 |
+| 图3-6 | `fig3-6_dynamic_trends.png` | 上升/下降主题趋势 |
+| 图3-7 | `fig3-7_cross_committee_heatmap.png` | 跨委员会实体参与重叠热力图 |
+
+---
 
 ## 常见问题
 
 ### 停用词调整
-
-若分析结果中包含过多无意义词汇（如 "document", "page"），请编辑 src/stopword.py 中的 additional_stopwords 集合。
+若分析结果中包含过多无意义词汇（如 "document", "page"），请编辑 `src/stopword.py` 中的 `additional_stopwords` 集合。
 
 ### API 错误处理
-
-若 api_clean.py 报错 RateLimitError 或连接超时，请检查 QWEN_API_KEY 是否有效，或在代码中增加重试逻辑。
+若 `api_clean.py` 报错 `RateLimitError` 或连接超时，请检查 API Key 是否有效，或在代码中增加重试逻辑。
 
 ### PDF 解析乱码
+部分旧版 PDF 可能无法通过 fitz 完美提取文本。可尝试 pdfplumber 作为备选方案。
 
-部分旧版 PDF 可能无法通过 fitz 完美提取文本。系统依赖 OCR 或更强的 PDF 解析库（如 pdfplumber）作为替补，但目前主要基于文本层提取。
+### BERTopic 内存不足
+MSC 委员会（837 篇）的 UMAP 降维和 HDBSCAN 聚类需要较大内存，建议至少 16GB RAM。
+
+---
+
+## License
+
+本项目仅用于学术研究。IMO 会议文档版权归国际海事组织所有。

@@ -18,5 +18,12 @@ plotly
 nltk
 gensim
 
+# BERTopic (Transformer-based Topic Modeling)
+bertopic
+sentence-transformers
+umap-learn
+hdbscan
+torch
+
 # Other
 openai

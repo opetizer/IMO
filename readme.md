@@ -5,6 +5,22 @@
 ## 目录结构
 
 - `src/`：源代码文件夹
+ - json_read.py: 通用数据读取模块，处理嵌套 JSON 和 Markdown 格式。
+ - cooccurrence.py: 关键词共现网络分析（SCI 绘图风格）。
+ - json_process.py: 数据清洗与词频统计工具。
+ - parse_data.py: 文档解析与清洗模块。
+ - api_clean.py: 大模型 API 调用模块。
+ - validate_json.py: 数据验证模块。
+ - html_vis.py: HTML 文档可视化模块。
+ - merge_data.py: 数据合并模块。
+ - stopwords.py: 停用词模块。
+ - topic.py: 主题建模模块。
+ - consolidate.py: 数据量化分析模块。
+ - sankey_trends.py: 单一议题的文档流向桑基图可视化。
+ - topic_attention_sankey.py: 多议题/多国家关注度时序变化桑基图。
+ - alliance_network.py: 国家/组织联合提案共现网络分析（Louvain社群发现）。
+ - citation_network.py: 文档引用网络 + TF-IDF相似度聚类 + 提案演化链追踪。
+
 - `data/`：数据文件夹
 - `readme.md`：项目说明文件
 
@@ -16,25 +32,21 @@ data/
 	│   ├── paper1.pdf
 	│   ├── paper2.pdf
 	│   └── ...
-	├── session2/
-	│   ├── paper1.pdf
-	│   ├── paper2.pdf
-	│   └── ...
-	└── ...
 ```
 `output`文件夹结构如图所示：
 ```
 output/
 └── conference_name/
 	├── session1/
-	│   ├── data.json
-	│   ├── word_freq.json
-	|   └── cooccurrence_graph.png
-	├── session2/
-	│   ├── data.json
-	│   ├── word_freq.json
-	|   └── cooccurrence_graph.png
-	└── ...
+	│   ├── data.json           # 原始结构化数据
+	│   ├── data_processed.json # 清洗后的扁平化数据
+	│   ├── word_freq.json      # 词频统计
+	|   └── cooccurrence_graph.png # 共现网络图
+	└── sankey/                 # 桑基图可视化输出
+		│   ├── Sankey_MEPC_{议题名}.html        # 按议题分类的桑基图
+		│   ├── Sankey_MEPC_{国家名}.html        # 按国家分类的桑基图
+		│   ├── sankey_{议题名}.html             # 单议题文档流向图
+		│   └── sankey_metadata.json             # 桑基图元数据
 ```	
 
 ## 使用方法
@@ -51,20 +63,7 @@ git clone https://github.com/imo-ai/imo-data.git
 pip install -r requirements.txt
 ```
 
-2. 将会议数据放置在 `data` 文件夹下，结构如图所示：
-```
-data/
-└── conference_name/
-	├── session1/
-	│   ├── paper1.pdf
-	│   ├── paper2.pdf
-	│   └── ...
-	├── session2/
-	│   ├── paper1.pdf
-	│   ├── paper2.pdf
-	│   └── ...
-	└── ...
-```
+3. 将会议数据放置在 `data` 文件夹下。
 
 ### 环境变量设置
 
@@ -83,7 +82,7 @@ $env:QWEN_BASE_URL="[https://api.qwen.ai/v1/chat/completions](https://api.qwen.a
 
 ### 智能解析与清洗模块 (Parsing & Cleaning)
 
-对应脚本: `src/parse_data.py, src/api_clean.py, src/validate_json.py`
+对应脚本: `src/parse_data.py, src/api_clean.py, src/validate_json.py， src/json_read.py`
 
 此模块负责将原始 PDF 文档转化为高质量的结构化数据。
 
@@ -111,10 +110,32 @@ $env:QWEN_BASE_URL="[https://api.qwen.ai/v1/chat/completions](https://api.qwen.a
 
 5. 数据验证 (`validate_json.py`): 校验生成的 JSON 结构是否完整，字段类型是否正确。
 
-使用示例:
+**使用示例**:
 
 ```bash
-python src/parse_data.py --title "MEPC" --subtitle "MEPC 77" --logging "log/logging.log"
+# 初始化并解析 MEPC 77 会议数据
+sh src/parse_initialize.sh 77
+```
+
+### 数据后处理与统计模块 (Data Processing)
+
+对应脚本: `src/json_process.py`
+
+在解析完成后，对数据进行进一步清洗和统计，生成更适合分析的扁平化数据。
+
+**功能**:
+
+字段拆分: 自动拆分 Originator 字段中的多个国家/组织（如 "China, Japan and Singapore" -> ["China", "Japan", "Singapore"]）。
+
+全文词频: 基于合并后的文档全文本（Full Text）计算词频，去除停用词。
+
+格式转换: 生成 `data_processed.json`。
+
+**使用示例**：
+
+```bash
+# 处理 MEPC 77 的数据
+sh src/json_process.sh 77
 ```
 
 ### 主题建模模块 (Topic Modeling)
@@ -151,6 +172,13 @@ python src/parse_data.py --title "MEPC" --subtitle "MEPC 77" --logging "log/logg
 
 - `document_topic_distribution.csv`: 文档-主题分布矩阵。
 
+**运行示例**:
+
+```bash
+# 对MEPC 77，运行 LDA 主题建模，保留 10 个主题
+sh src/topic.sh 77 10
+```
+
 ### 关键词共现与网络分析 (Co-occurrence Network)
 
 对应脚本: `src/cooccurrence.py`
@@ -176,6 +204,13 @@ python src/parse_data.py --title "MEPC" --subtitle "MEPC 77" --logging "log/logg
 4. 社群发现 (Community Detection): 使用 Louvain 算法对网络节点进行聚类着色，识别语义群组。
 
 **输出文件**: `cooccurrence_graph.png` (网络图), `word_freq.json` (词频表)。
+
+**运行示例**:
+
+```bash
+# 对 MEPC 77 运行关键词共现分析
+sh src/cooccurrence.sh 77
+```
 
 ### 趋势分析与可视化 (Trend Analysis & Visualization)
 
@@ -203,41 +238,116 @@ python src/parse_data.py --title "MEPC" --subtitle "MEPC 77" --logging "log/logg
 
 - 基于 pandas 和 plotly生成 热力图 (国家 vs 议题)、旭日图 (议题层级分布) 和 气泡图 (参与度分析)。
 
-## 自动化工作流脚本 (Workflow Automation)
+**输出文件**: `trend_analysis.csv` (趋势数据), `trend_analysis.html` (交互式仪表盘)。
 
-为了简化操作，系统提供了三个 Shell 脚本来串联上述模块。
+**运行示例**:
 
-1. 初始化与解析 (`parse_initialize.sh`)
-
-功能: 初始化目录结构，运行数据解析和清洗。
-用法:
 ```bash
-# ./src/parse_initialize.sh [Session_Number]
-sh src/parse_initialize.sh 77
+# 对 MEPC 77 运行趋势分析
+sh src/consolidate.sh 77
 ```
 
-此命令会自动创建 output/MEPC/MEPC 77 目录，并调用 `parse_data.py` 处理 data/MEPC/MEPC 77 下的数据。
+### 桑基图可视化 (Sankey Diagram Visualization)
 
-2. 运行主题分析 (topic.sh)
+对应脚本: `src/sankey_trends.py, src/topic_attention_sankey.py`
 
-功能: 对指定会话运行 LDA 主题建模。
-用法:
+生成桑基图以展示议题关注度随时间的演变和国家参与度的变化。
+
+#### 1. 单一议题文档流向桑基图 (sankey_trends.py)
+
+为每个热点议题生成独立的桑基图，展示不同国家在该议题上的文档流向。
+
+**算法流程**
+
+1. 数据聚合:
+   - 遍历所有会议文件夹（如 MEPC 77-83）
+   - 统计每个议题在每个会议、每个国家的文档数量
+   - 筛选出热点议题（按文档总量排序）
+
+2. 节点构建:
+   - 横轴：会议按时间顺序排列
+   - 节点：每个会议中的国家节点（格式："{会议} - {国家}"）
+   - 节点大小：基于文档数量进行全局缩放
+
+3. 连线构建:
+   - 相邻会议间，相同国家的议题文档流向
+   - 流向值 = min(上次会议文档数, 本次会议文档数)
+
+4. 可视化:
+   - 使用 Plotly Sankey 生成交互式 HTML
+   - 支持悬停查看详细信息
+   - 颜色区分不同国家
+
+**输出文件**: `sankey_{议题名}.html` (每个议题一个文件)
+
+**运行示例**:
 ```bash
-# ./src/topic.sh [Session_Number] [Num_Topics]
-sh src/topic.sh 77 10
+# 生成前6个热点议题的桑基图
+python src/sankey_trends.py --meeting_folder "output/MEPC" --top_k_titles 6 --top_n_countries 8
+
+# 使用归一化和最小流向方法
+python src/sankey_trends.py --meeting_folder "output/MEPC" --normalize --flow_method min
 ```
 
-此命令会对 MEPC 77 的数据提取 10 个主题，并生成相关 CSV 报告。
+#### 2. 多维度关注度桑基图 (topic_attention_sankey.py)
 
-3. 跨会话趋势整合 (consolidate.sh)
+为每个议题和每个国家分别生成独立的桑基图，从多角度分析关注度变化。
 
-功能: 整合所有已处理会话的数据，生成趋势图。
-用法:
+**算法流程**
+
+1. 热点识别:
+   - 统计所有议题的文档总量，选出 Top-N 热点议题
+   - 统计所有国家的文档总量，选出 Top-N 活跃国家
+
+2. 按议题分类 (Per-Title Sankey):
+   - 为每个热点议题生成一个桑基图
+   - 横轴：会议时间序列
+   - 节点：参与该议题的国家
+   - 展示：不同国家对该议题的关注度演变
+
+3. 按国家分类 (Per-Country Sankey):
+   - 为每个活跃国家生成一个桑基图
+   - 横轴：会议时间序列
+   - 节点：该国关注的热点议题
+   - 展示：该国对不同议题的关注度分布
+
+4. 节点定位:
+   - 全局最大文档数用于节点高度缩放
+   - 节点位置反映实际文档数量差异
+   - 同一会议内的节点按文档量排序
+
+**输出文件**:
+- 议题图：`Sankey_{会议类型}_{议题名}.html`
+- 国家图：`Sankey_{会议类型}_{国家名}.html`
+- 元数据：`sankey_metadata.json`
+
+**运行示例**:
 ```bash
-sh src/consolidate.sh
+# 生成前5个议题和前8个国家的桑基图
+python src/topic_attention_sankey.py --meeting_folder "output/MEPC" --top_n_titles 5 --top_n_countries 8
+
+# 设置最小文档数阈值
+python src/topic_attention_sankey.py --meeting_folder "output/MEPC" --min_count 2
 ```
 
-此命令会扫描 output/MEPC/ 下的所有会话子目录，合并词频数据，并为预设关键词（如 ghg, lng, oil）生成趋势图。
+**可视化特点**
+
+- 节点高度：反映文档数量（关注度）
+- 连线透明度：表示流向强度
+- 颜色编码：区分国家/议题
+- 交互式：悬停显示详细信息
+
+**参数说明**
+
+| 参数 | sankey_trends.py | topic_attention_sankey.py | 默认值 | 说明 |
+|------|-----------------|--------------------------|--------|------|
+| `--meeting_folder` | ✓ | ✓ | 必需 | 会议文件夹路径 |
+| `--top_n_titles` / `--top_k_titles` | ✓ | ✓ | 5/6 | 显示的议题数量 |
+| `--top_n_countries` | ✓ | ✓ | 8 | 显示的国家数量 |
+| `--min_count` / `--min_total_count` | ✓ | ✓ | 1 | 最小文档数阈值 |
+| `--normalize` | ✓ | - | False | 是否归一化为百分比 |
+| `--flow_method` | ✓ | - | min | 流向计算方法 (min/avg/next) |
+| `--out_folder` | ✓ | ✓ | auto | 输出文件夹 |
 
 ## 常见问题
 

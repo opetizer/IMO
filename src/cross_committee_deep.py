@@ -27,6 +27,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from scipy.spatial.distance import cosine
+from sklearn.metrics.pairwise import cosine_similarity
+
+import matplotlib.pyplot as plt
+
+from stopwords import STOPWORDS
 
 
 # ──────────── Data Loading ────────────
@@ -99,18 +104,32 @@ def split_originators(orig_str):
 
 # ──────────── 1. Cross-Topic Similarity ────────────
 
+def split_keyword_terms(words):
+    """Split keyword phrases into unique tokens and drop committee-like tokens."""
+    terms = set()
+    for w in words:
+        raw = str(w).lower()
+        # Drop the entire phrase if it is committee-related, e.g. maritime_safety_committee.
+        if 'committee' in raw:
+            continue
+        for t in re.split(r'[_\W]+', raw):
+            if t and 'committee' not in t:
+                terms.add(t)
+    return terms
+
 def compute_topic_similarity_keywords(all_data):
     """Compute topic similarity across committees using keyword overlap (Jaccard)."""
     all_topics = []
     for c, d in all_data.items():
         for tid, words in d['topic_words'].items():
+            terms = split_keyword_terms(words)
             all_topics.append({
                 'committee': c,
                 'topic_id': tid,
                 'label': f"{c}:T{tid}",
                 'full_label': f"{c}:T{tid} ({d['topic_map'].get(tid, '')})",
-                'words': set(w.lower() for w in words),
-                'words_flat': ' '.join(words).lower()
+                'terms': terms,
+                'terms_nostop': terms - STOPWORDS,
             })
     
     n = len(all_topics)
@@ -121,27 +140,20 @@ def compute_topic_similarity_keywords(all_data):
             if i == j:
                 sim_matrix[i][j] = 1.0
             else:
-                # Word overlap (both exact and partial)
-                w1 = all_topics[i]['words']
-                w2 = all_topics[j]['words']
+                # Word overlap after splitting keyword phrases into unique terms.
+                w1 = all_topics[i]['terms']
+                w2 = all_topics[j]['terms']
                 
                 # Jaccard similarity
                 intersection = len(w1 & w2)
                 union = len(w1 | w2)
                 jaccard = intersection / union if union > 0 else 0
                 
-                # Also check partial word overlap (e.g., "emissions" in "reduction emissions ships")
-                flat1 = all_topics[i]['words_flat']
-                flat2 = all_topics[j]['words_flat']
-                
-                # Count shared significant terms
-                terms1 = set(flat1.split())
-                terms2 = set(flat2.split())
+                # Count shared significant terms with stopwords removed.
+                terms1 = all_topics[i]['terms_nostop']
+                terms2 = all_topics[j]['terms_nostop']
                 common_terms = terms1 & terms2
-                # Remove stopwords
-                stopwords = {'the', 'of', 'and', 'in', 'for', 'to', 'a', 'on', 'by', 'is', 'at', 'with'}
-                common_terms -= stopwords
-                term_overlap = len(common_terms) / max(len(terms1 | terms2 - stopwords), 1)
+                term_overlap = len(common_terms) / max(len(terms1 | terms2), 1)
                 
                 sim_matrix[i][j] = max(jaccard, term_overlap)
     
@@ -593,12 +605,74 @@ def plot_committee_overlap(country_df, out_dir):
     print(f"  Saved: {path}")
 
 
+def save_deep_csv_and_txt(cross_pairs, top_pairs, report, out_dir):
+    """Save CSV tables and interpretation TXT for cross-committee analysis."""
+    import pandas as pd
+
+    # 1. Cross topic similarity CSV (top 20)
+    if cross_pairs:
+        sim_df = pd.DataFrame(cross_pairs[:20])
+        csv_path = os.path.join(out_dir, 'cross_topic_similarity_top.csv')
+        sim_df.to_csv(csv_path, index=False, encoding='utf-8-sig')
+        print(f"  Saved: {csv_path}")
+
+    # 2. Bridge countries CSV
+    bridge = report.get('bridge_countries', {})
+    if bridge:
+        bridge_rows = [{'country': k, 'committees_active': v} for k, v in
+                       sorted(bridge.items(), key=lambda x: x[1], reverse=True)]
+        bridge_df = pd.DataFrame(bridge_rows)
+        csv_path = os.path.join(out_dir, 'bridge_countries.csv')
+        bridge_df.to_csv(csv_path, index=False, encoding='utf-8-sig')
+        print(f"  Saved: {csv_path}")
+
+    # 3. Interpretation TXT
+    lines = ["=== 跨委员会深度关联分析结果 ===\n"]
+
+    lines.append("一、基本统计")
+    lines.append(f"分析委员会: {', '.join(report.get('committees', []))}")
+    lines.append(f"总文档数: {report.get('total_docs', 0)}，总主题数: {report.get('total_topics', 0)}\n")
+
+    lines.append("二、跨委员会主题关联")
+    if cross_pairs:
+        lines.append(f"发现 {len(cross_pairs)} 对跨委员会相似主题，前5名:")
+        for p in cross_pairs[:5]:
+            lines.append(f"  {p['topic_a'][:35]} ↔ {p['topic_b'][:35]} (相似度: {p['similarity']:.3f})")
+    else:
+        lines.append("  未发现显著跨委员会主题关联。")
+    lines.append("")
+
+    lines.append("三、跨委员会活跃国家")
+    if bridge:
+        top_bridge = sorted(bridge.items(), key=lambda x: x[1], reverse=True)[:10]
+        for country, n_comms in top_bridge:
+            lines.append(f"  {country}: 活跃于 {n_comms} 个委员会")
+    lines.append("")
+
+    lines.append("四、联合提案网络")
+    top_cs = report.get('top_cosponsor_pairs', [])
+    if top_cs:
+        lines.append("最频繁的跨委员会联合提案关系:")
+        for pair_info in top_cs[:5]:
+            if isinstance(pair_info, (list, tuple)) and len(pair_info) == 2:
+                pair, count = pair_info
+                if isinstance(pair, (list, tuple)) and len(pair) == 2:
+                    lines.append(f"  {pair[0]} + {pair[1]}: {count} 次")
+
+    txt_path = os.path.join(out_dir, 'cross_committee_interpretation.txt')
+    with open(txt_path, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(lines))
+    print(f"  Saved: {txt_path}")
+
+
 # ──────────── Main ────────────
 
 def main():
     parser = argparse.ArgumentParser(description='Cross-Committee Deep Analysis')
     parser.add_argument('--committees', nargs='+', default=['MEPC', 'MSC', 'CCC', 'SSE', 'ISWG-GHG'])
     parser.add_argument('--base-dir', default='output')
+    parser.add_argument('--cosine-threshold', type=float, default=0.1,
+                        help='Threshold for cross-topic cosine similarity pairs')
     args = parser.parse_args()
     
     out_dir = os.path.join(args.base_dir, 'deep_analysis')
@@ -614,6 +688,67 @@ def main():
     print("=" * 60)
     sim_matrix, labels, short_labels, committees_list, all_topics = compute_topic_similarity_keywords(all_data)
     cross_pairs = plot_cross_topic_heatmap(sim_matrix, labels, short_labels, committees_list, all_data, out_dir)
+
+    # 1b. Cross-topic cosine similarity (keywords)
+    print("\n" + "=" * 60)
+    print("1b. Cross-Committee Topic Cosine Similarity (keywords)...")
+    print("=" * 60)
+    print(f"  Cosine threshold: {args.cosine_threshold:.3f}")
+    # 取所有主题的关键词全集
+    all_keywords = set()
+    for t in all_topics:
+        all_keywords.update(t['terms'])
+    all_keywords = sorted(all_keywords)
+    kw_index = {w: i for i, w in enumerate(all_keywords)}
+    # 构建主题-关键词0/1向量
+    topic_vecs = np.zeros((len(all_topics), len(all_keywords)), dtype=int)
+    for idx, t in enumerate(all_topics):
+        for w in t['terms']:
+            if w in kw_index:
+                topic_vecs[idx, kw_index[w]] = 1
+    # 计算余弦相似度
+    cos_sim = cosine_similarity(topic_vecs)
+    # 只保留跨委员会且不重复的高相似对
+    cosine_pairs = []
+    for i in range(len(all_topics)):
+        for j in range(i+1, len(all_topics)):
+            if all_topics[i]['committee'] != all_topics[j]['committee']:
+                score = float(cos_sim[i, j])
+                if score > args.cosine_threshold:
+                    cosine_pairs.append({
+                        'topic_a': all_topics[i]['full_label'],
+                        'topic_b': all_topics[j]['full_label'],
+                        'committee_a': all_topics[i]['committee'],
+                        'committee_b': all_topics[j]['committee'],
+                        'cosine_similarity': round(score, 4)
+                    })
+    cosine_pairs.sort(key=lambda x: x['cosine_similarity'], reverse=True)
+    print(f"  Pairs above threshold: {len(cosine_pairs)}")
+    # 输出top对到CSV
+    out_csv = os.path.join(out_dir, 'cross_topic_cosine_similarity_top.csv')
+    pd.DataFrame(cosine_pairs[:50]).to_csv(out_csv, index=False, encoding='utf-8-sig')
+    print(f'  Saved: {out_csv}')
+    # 可选：输出热力图
+    # 只展示top 30对
+    if cosine_pairs:
+        import matplotlib.pyplot as plt
+        topN = min(30, len(cosine_pairs))
+        fig, ax = plt.subplots(figsize=(10, max(6, topN*0.4)), dpi=180)
+        sim_vals = [p['cosine_similarity'] for p in cosine_pairs[:topN]]
+        labels_a = [p['topic_a'][:40] for p in cosine_pairs[:topN]]
+        labels_b = [p['topic_b'][:40] for p in cosine_pairs[:topN]]
+        y = np.arange(topN)
+        ax.barh(y, sim_vals, color='teal')
+        ax.set_yticks(y, [f"{a}\n{b}" for a, b in zip(labels_a, labels_b)])
+        ax.set_xlabel('Cosine Similarity')
+        ax.set_title('Top Cross-Committee Topic Pairs (Cosine Similarity)')
+        for i, v in enumerate(sim_vals):
+            ax.text(v+0.01, i, f'{v:.2f}', va='center', fontsize=8)
+        fig.tight_layout()
+        out_png = os.path.join(out_dir, 'cross_topic_cosine_similarity_top.png')
+        fig.savefig(out_png, bbox_inches='tight')
+        plt.close(fig)
+        print(f'  Saved: {out_png}')
     
     print(f"\n  Top 10 cross-committee topic links:")
     for p in cross_pairs[:10]:
@@ -627,6 +762,68 @@ def main():
     print(f"  Total records: {len(country_df)}")
     plot_country_committee_sankey(country_df, out_dir, top_n=20)
     plot_committee_overlap(country_df, out_dir)
+
+    # 2b. Committee-level Jaccard based on active country/entity overlap
+    print("\n" + "=" * 60)
+    print("2b. Committee-level Jaccard (active country/entity overlap)...")
+    print("=" * 60)
+    committees = list(all_data.keys())
+    active_sets = {}
+    for c in committees:
+        df = all_data[c]['df']
+        # 只统计有有效topic_id的提案
+        actives = set()
+        for _, row in df.iterrows():
+            if row.get('topic_id', -1) == -1:
+                continue
+            origs = split_originators(row.get('originator', ''))
+            for o in origs:
+                if o and o != 'Secretariat':
+                    actives.add(o)
+        active_sets[c] = actives
+
+    n = len(committees)
+    mat = np.zeros((n, n), dtype=float)
+    for i, ci in enumerate(committees):
+        for j, cj in enumerate(committees):
+            aset = active_sets[ci]
+            bset = active_sets[cj]
+            if not aset and not bset:
+                mat[i, j] = 0.0
+            elif i == j:
+                mat[i, j] = 1.0
+            else:
+                inter = len(aset & bset)
+                union = len(aset | bset)
+                mat[i, j] = inter / union if union else 0.0
+
+    # 输出CSV
+    out_csv = os.path.join(out_dir, 'committee_active_entity_jaccard.csv')
+    with open(out_csv, 'w', encoding='utf-8-sig') as f:
+        f.write(',' + ','.join(committees) + '\n')
+        for i, c in enumerate(committees):
+            row = ','.join(f'{mat[i,j]:.4f}' for j in range(n))
+            f.write(f'{c},{row}\n')
+
+    # 输出PNG
+    out_png = os.path.join(out_dir, 'committee_active_entity_jaccard.png')
+    fig, ax = plt.subplots(figsize=(7.5, 6.2), dpi=180)
+    im = ax.imshow(mat, cmap='YlGnBu', vmin=0, vmax=1)
+    ax.set_xticks(range(n), committees, rotation=35, ha='right')
+    ax.set_yticks(range(n), committees)
+    ax.set_title('Committee Jaccard Similarity (Active Entities)')
+    for i in range(n):
+        for j in range(n):
+            v = mat[i, j]
+            color = 'white' if v > 0.55 else 'black'
+            ax.text(j, i, f'{v:.2f}', ha='center', va='center', color=color, fontsize=8)
+    cbar = fig.colorbar(im, ax=ax, shrink=0.85)
+    cbar.set_label('Jaccard similarity')
+    fig.tight_layout()
+    fig.savefig(out_png, bbox_inches='tight')
+    plt.close(fig)
+    print(f'  Saved: {out_png}')
+    print(f'  Saved: {out_csv}')
     
     # 3. Co-sponsorship network
     print("\n" + "=" * 60)
@@ -665,6 +862,9 @@ def main():
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
     print(f"\n  Saved: {path}")
+    
+    # Save CSV and interpretation
+    save_deep_csv_and_txt(cross_pairs, top_pairs, report, out_dir)
     
     print("\nDeep analysis complete!")
 

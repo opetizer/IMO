@@ -91,7 +91,7 @@ IMO/
 |:---|:---|:---|
 | 主题建模 | BERTopic, sentence-transformers, UMAP, HDBSCAN | 基于Transformer的主题发现 |
 | 网络分析 | NetworkX, python-louvain | 引用/联盟网络构建与社群发现 |
-| NLP/ML | scikit-learn, TF-IDF | 文本向量化、相似度计算、聚类 |
+| NLP/ML | spaCy, scikit-learn, TF-IDF | 英文分词、词性标注、命名实体识别、文本向量化 |
 | 可视化 | Plotly, Matplotlib | 交互式图表与学术图表 |
 | 数据处理 | Pandas, NumPy | 结构化数据处理 |
 | PDF解析 | PyMuPDF (fitz) | PDF文本提取 |
@@ -113,9 +113,20 @@ source imo/bin/activate
 # 3. 安装依赖
 pip install -r requirements.txt
 
-# 4. 下载预训练模型（sentence-transformers）
+# 4. 下载 spaCy 英文模型
+python -m spacy download en_core_web_sm
+
+# 5. 下载预训练模型（sentence-transformers）
 python src/download_models.py
 ```
+
+### 英文文本预处理说明
+
+项目现已使用 `src/spacy_pipeline.py` 作为统一英文 NLP 入口，提供英文分词、词性标注、命名实体识别，以及海事领域术语词典辅助分词。
+
+领域词典默认包含 `marine plastic litter`、`greenhouse gas`、`energy efficiency`、`port state control` 等固定专业表达，并会在预处理阶段将这些短语合并为单一语义单元，例如 `marine_plastic_litter`、`greenhouse_gas`，供 `cooccurrence.py` 与 `bertopic_model.py` 统一复用。
+
+如需扩展海事术语，请直接修改 `src/spacy_pipeline.py` 中的 `DOMAIN_TERMS` 常量。
 
 ### 环境变量
 
@@ -148,6 +159,7 @@ export ANTHROPIC_API_KEY="sk-ant-xxxxxxxx"
 | `fix_originator.py` | 从 PDF 文件名修复缺失的 Originator 字段 |
 | `fix_dates.py` | 日期格式标准化 |
 | `stopword.py` | 海事领域自定义停用词表 |
+| `spacy_pipeline.py` | spaCy 英文预处理管线（分词 / POS / NER / 海事术语词典） |
 
 **数据处理流程：** PDF → PyMuPDF文本提取 → 正则预清洗 → LLM结构化 → JSON验证 → 后处理
 
@@ -155,7 +167,7 @@ export ANTHROPIC_API_KEY="sk-ant-xxxxxxxx"
 
 | 脚本 | 功能 |
 |:---|:---|
-| `bertopic_model.py` | **核心脚本。** 基于 BERTopic 的主题建模，使用 sentence-transformers 编码、UMAP 降维、HDBSCAN 聚类，自动发现文档主题结构。替代了早期 LDA 方案。 |
+| `bertopic_model.py` | **核心脚本。** 基于 BERTopic 的主题建模，使用 sentence-transformers 编码、UMAP 降维、HDBSCAN 聚类，并复用 spaCy 统一 analyzer 保留海事术语完整语义单元。 |
 | `dynamic_topics.py` | 分析主题随会议届次的动态演化，识别上升趋势与下降趋势主题 |
 | `topic.py` | [legacy] 早期 LDA 主题建模，已被 bertopic_model.py 替代 |
 
@@ -169,7 +181,7 @@ export ANTHROPIC_API_KEY="sk-ant-xxxxxxxx"
 | `alliance_network.py` | 基于共同提案关系构建合作网络，Louvain 社群发现识别联盟结构 |
 | `citation_network.py` | 正则提取文档间引用关系，构建有向引用网络，TF-IDF 相似度矩阵，层次聚类，演化链追踪 |
 | `cross_committee_deep.py` | 跨委员会主题相似度矩阵、桥接国家识别、政策关联分析 |
-| `cooccurrence.py` | TF-IDF 筛选关键词 → 滑动窗口共现矩阵 → Louvain 聚类着色 |
+| `cooccurrence.py` | spaCy 分词 + 领域术语合并 → TF-IDF 筛选关键词 → 滑动窗口共现矩阵 → Louvain 聚类着色 |
 
 ### 四、可视化
 

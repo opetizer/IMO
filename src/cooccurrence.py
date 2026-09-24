@@ -1,24 +1,21 @@
 import os
-import nltk
 import json
 import networkx as nx
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from collections import defaultdict
-from nltk.corpus import wordnet, stopwords
-from nltk.stem import WordNetLemmatizer
 import argparse
 import logging
 from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
 import community as community_louvain
 from adjustText import adjust_text
-from gensim.models import Phrases
 from datetime import datetime
 
 # --- 引入新的数据读取模块 ---
 from json_read import load_data
+from spacy_pipeline import extract_content_tokens
 
 # 设置通用绘图风格 (SCI 论文风格：白色背景，无网格或少网格)
 sns.set_theme(style="ticks", context="paper") # context="paper" 适合论文发表，字体大小适中
@@ -55,7 +52,23 @@ parser.add_argument('--start_date', type=str, default=None,
                     help="筛选的开始日期 (格式: YYYY-MM-DD)。")
 parser.add_argument('--end_date', type=str, default=None,
                     help="筛选的结束日期 (格式: YYYY-MM-DD)。")
-args = parser.parse_args()
+
+if __name__ == '__main__':
+    args = parser.parse_args()
+else:
+    args = argparse.Namespace(
+        title='cooccurrence',
+        subtitle='cooccurrence',
+        logging='cooccurrence.log',
+        text_extracted_folder='',
+        symbol=None,
+        per_agenda=False,
+        per_agenda_topk=40,
+        min_agenda_nodes=20,
+        countries=None,
+        start_date=None,
+        end_date=None,
+    )
 
 text_folder = args.text_extracted_folder
 top_k = 80 # 略微减少节点数，使图更易读 (原100)
@@ -64,9 +77,8 @@ output_path = f'output/{args.title}/{args.subtitle}'
 co_output_path = os.path.join(output_path, 'cooccurrence_graph.png')
 freq_output_path = os.path.join(output_path, 'word_freq.json')
 
-stop_words = set(stopwords.words('english'))
-from stopword import additional_stopwords
-stop_words.update(additional_stopwords)
+from stopwords import STOPWORDS
+stop_words = STOPWORDS
 json_file_path = os.path.join(text_folder, "data.json")
 
 def setup_logger(log_file):
@@ -85,33 +97,15 @@ def setup_logger(log_file):
     logger.addHandler(console_handler)
     return logger
 
-logger = setup_logger(args.logging)
-
-def download_nltk_data():
-    nltk.download('averaged_perceptron_tagger', quiet=True)
-    nltk.download('punkt', quiet=True)
-    nltk.download('stopwords', quiet=True) 
-    nltk.download('wordnet', quiet=True)
-
-lemmatizer = WordNetLemmatizer()
-def get_wordnet_pos(treebank_tag):
-    if treebank_tag.startswith('J'): return wordnet.ADJ
-    elif treebank_tag.startswith('V'): return wordnet.VERB
-    elif treebank_tag.startswith('N'): return wordnet.NOUN
-    elif treebank_tag.startswith('R'): return wordnet.ADV
-    else: return wordnet.NOUN
+if __name__ == '__main__':
+    logger = setup_logger(args.logging)
+else:
+    logger = logging.getLogger(__name__)
+    if not logger.handlers:
+        logger.addHandler(logging.NullHandler())
 
 def lemmatizing_tokenizer(text):
-    if not isinstance(text, str): return []
-    tagged_tokens = nltk.pos_tag(nltk.word_tokenize(text))
-    lemmas = []
-    for word, tag in tagged_tokens:
-        if tag.startswith('NN'): 
-            pos = get_wordnet_pos(tag)
-            lemma = lemmatizer.lemmatize(word.lower(), pos=pos)
-            if len(lemma) > 1 and lemma.isalpha() and lemma not in stop_words:
-                lemmas.append(lemma)
-    return lemmas
+    return extract_content_tokens(text, stopwords=stop_words)
 
 def build_cooccurrence_graph(token_docs, top_k_local=80, edge_threshold=EDGE_WEIGHT_THRESHOLD, window_local=window_size):
     """基于已处理的 token 列表（每个元素是一篇文档的 tokens）构建共现网络并返回 NetworkX 图对象。
@@ -238,9 +232,70 @@ def draw_graph(G, out_file, title_text, subtitle_text=None):
     logger.info(f"Saved graph: {out_file}")
 
 
-def main():
-    download_nltk_data()
+def save_cooccurrence_csv_txt(G, output_dir, title, subtitle):
+    """Save word_freq CSV, community CSV, and interpretation TXT."""
+    import pandas as pd
 
+    if G is None or not G.nodes():
+        return
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    # 1. Word freq top50 CSV (use TF-IDF weight stored in node)
+    freq_rows = []
+    for n in G.nodes():
+        freq_rows.append({
+            'keyword': n,
+            'frequency': G.nodes[n].get('size', 0),
+            'tfidf_score': round(G.nodes[n].get('weight', 0), 4)
+        })
+    freq_df = pd.DataFrame(freq_rows).sort_values('tfidf_score', ascending=False).head(50)
+    freq_path = os.path.join(output_dir, 'word_freq_top50.csv')
+    freq_df.to_csv(freq_path, index=False, encoding='utf-8-sig')
+    logger.info(f"Saved: {freq_path}")
+
+    # 2. Louvain communities CSV
+    try:
+        partition = community_louvain.best_partition(G)
+        comm_rows = [{'keyword': n, 'community': partition[n]} for n in G.nodes()]
+        comm_df = pd.DataFrame(comm_rows).sort_values(['community', 'keyword'])
+        comm_path = os.path.join(output_dir, 'cooccurrence_communities.csv')
+        comm_df.to_csv(comm_path, index=False, encoding='utf-8-sig')
+        logger.info(f"Saved: {comm_path}")
+    except Exception as e:
+        logger.warning(f"Community detection failed: {e}")
+        partition = {}
+
+    # 3. Interpretation TXT
+    lines = [f"=== {title} {subtitle} 关键词共现网络分析结果 ===\n"]
+    lines.append("一、基本统计")
+    lines.append(f"共现网络包含 {len(G.nodes())} 个关键词节点，{len(G.edges())} 条共现边。")
+    lines.append(f"边权重阈值: {EDGE_WEIGHT_THRESHOLD}\n")
+
+    lines.append("二、高频关键词")
+    top10 = freq_df.head(10)
+    for _, row in top10.iterrows():
+        lines.append(f"  {row['keyword']}: 出现 {int(row['frequency'])} 次，TF-IDF {row['tfidf_score']:.4f}")
+    lines.append("")
+
+    lines.append("三、语义社群")
+    if partition:
+        from collections import Counter as _Counter
+        comm_counts = _Counter(partition.values())
+        for cid in sorted(comm_counts.keys()):
+            members = [n for n, c in partition.items() if c == cid]
+            # sort by node size (frequency)
+            members.sort(key=lambda x: G.nodes[x].get('size', 0), reverse=True)
+            lines.append(f"  社群 {cid+1}（{len(members)} 个词）: {', '.join(members[:8])}"
+                        + ('...' if len(members) > 8 else ''))
+
+    txt_path = os.path.join(output_dir, 'cooccurrence_interpretation.txt')
+    with open(txt_path, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(lines))
+    logger.info(f"Saved: {txt_path}")
+
+
+def main():
     try:
         start_date_obj = datetime.strptime(args.start_date, '%Y-%m-%d') if args.start_date else None
         end_date_obj = datetime.strptime(args.end_date, '%Y-%m-%d') if args.end_date else None
@@ -304,17 +359,13 @@ def main():
         return
 
     # NLP 处理
-    logger.info("分词与短语提取...")
+    logger.info("使用 spaCy 进行分词、词性筛选与领域术语合并...")
     all_tokens = [lemmatizing_tokenizer(doc) for doc in documents]
     all_tokens = [t for t in all_tokens if t]
     if not all_tokens:
         logger.warning("分词后没有有效 tokens，结束。")
         return
-
-    bigram_phraser = Phrases(all_tokens, min_count=2, threshold=4)
-    tokens_with_bigrams = [bigram_phraser[doc] for doc in all_tokens]
-    trigram_phraser = Phrases(tokens_with_bigrams, min_count=2, threshold=4)
-    processed_tokens_all = [trigram_phraser[doc] for doc in tokens_with_bigrams]
+    processed_tokens_all = all_tokens
 
     os.makedirs(output_path, exist_ok=True)
     token_output_path = os.path.join(output_path, 'processed_tokens.json')
@@ -326,6 +377,7 @@ def main():
     G_overall = build_cooccurrence_graph(processed_tokens_all, top_k_local=top_k)
     overall_out = os.path.join(output_path, 'cooccurrence_overall.png')
     draw_graph(G_overall, overall_out, f"{args.subtitle} (Overall)", subtitle_text=args.title)
+    save_cooccurrence_csv_txt(G_overall, output_path, args.title, args.subtitle)
 
     # 2) Per-agenda graphs
     if args.per_agenda:

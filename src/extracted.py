@@ -7,7 +7,7 @@ import argparse
 import pandas as pd
 from bs4 import BeautifulSoup
 import nltk
-from nltk.corpus import stopwords
+from stopwords import STOPWORDS
 from collections import Counter
 from tqdm import tqdm
 import logging
@@ -38,9 +38,8 @@ def setup_logger(log_file):
 
 logger = setup_logger(args.logging)
 
-# 初始化nltk停用词
-nltk.download('stopwords')
-stop_words = set(stopwords.words('english'))
+# 使用统一停用词
+stop_words = STOPWORDS
 
 # 读取 index.html，提取PDF文件名
 def extract_pdf_list(index_html_path):

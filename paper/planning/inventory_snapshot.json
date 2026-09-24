@@ -1,0 +1,926 @@
+{
+  "generated_at_utc": "2026-09-20T05:27:42.167047+00:00",
+  "root": "D:\\university\\2025-2026-2\\Research\\IMO",
+  "scope": "File inventory and saved-output checks, not a model rerun or PDF content validation",
+  "files": {
+    "data": {
+      ".pdf": 2898,
+      ".htm": 18
+    },
+    "output": {
+      ".csv": 131,
+      ".xlsx": 29,
+      ".json": 126,
+      ".txt": 53,
+      ".png": 128,
+      ".html": 106,
+      ".safetensors": 16
+    },
+    "src": {
+      ".py": 30,
+      ".sh": 5
+    },
+    "paper": {
+      ".md": 2,
+      ".zip": 1,
+      ".png": 55
+    }
+  },
+  "committees": {
+    "MEPC": {
+      "raw_pdf_files": 1053,
+      "assignment_rows": 856,
+      "unique_assignment_symbols": 856,
+      "non_outlier_topic_clusters": 26,
+      "outliers": 71,
+      "outlier_rate": 0.08294392523364486,
+      "assignment_meetings": {
+        "MEPC 77": 92,
+        "MEPC 78": 100,
+        "MEPC 79": 105,
+        "MEPC 80": 116,
+        "MEPC 81": 135,
+        "MEPC 82": 308
+      },
+      "raw_pdf_folders": {
+        "MEPC 77": 93,
+        "MEPC 78": 103,
+        "MEPC 79": 109,
+        "MEPC 80": 125,
+        "MEPC 81": 147,
+        "MEPC 81 VP": 5,
+        "MEPC 82": 319,
+        "MEPC 83": 152
+      },
+      "symbol_meeting_mismatches": [
+        {
+          "symbol": "MEPC 83/INF.2",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/INF.3",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/INF.4",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/INF.6",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/INF.7",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/INF.8",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/INF.9",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/INF.10",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/INF.12",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/INF.13",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/INF.15",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/INF.16",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/INF.17",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/INF.18",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/INF.19",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/INF.20",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/INF.21",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/INF.23",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/INF.24",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/INF.25",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/INF.28",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/INF.29",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/INF.30",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/INF.32",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/INF.33",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/INF.34",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/INF.35",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/1",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/1/1",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/2",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/2/1",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/2/2",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/3",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/3/1",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/3/2",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/4/4",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/4/5",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/4/6",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/4/7",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/4/8",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/4/9",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/4/10",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/4/11",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/4/12",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/4/13",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/4/14",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/4/15",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/5",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/5/1",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/6",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/6/1",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/6/2",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/6/3",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/6/4",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/6/5",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/6/6",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/6/7",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/6/8",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/6/9",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/6/10",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/6/11",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/6/12",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/6/13",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/6/14",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/6/15",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/6/16",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/1",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/2",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/3",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/4",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/5",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/6",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/7",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/8",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/9",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/10",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/11",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/12",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/13",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/14",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/15",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/16",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/17",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/18",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/19",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/20",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/21",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/22",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/23",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/24",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/25",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/26",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/27",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/28",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/29",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/30",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/31",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/32",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/33",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/34",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/35",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/36",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/37",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/38",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/39",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/40",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/41",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/42",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/43",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/44",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/45",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/46",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/7/47",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/8",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/8/1",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/8/2",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/9",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/9/1",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/10",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/10/1",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/10/2",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/10/3",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/11",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/11/1",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/11/2",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/12",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/12/1",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/12/2",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/12/3",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/12/4",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/12/5",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/12/6",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/12/7",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/13",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/13/1",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/14",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/14/1",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/14/2",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/14/4",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/14/5",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/16",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/16/1",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/16/2",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/16/3",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/16/4",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        },
+        {
+          "symbol": "MEPC 83/16/5",
+          "meeting": "MEPC 82",
+          "symbol_meeting": "MEPC 83"
+        }
+      ]
+    },
+    "MSC": {
+      "raw_pdf_files": 856,
+      "assignment_rows": 837,
+      "unique_assignment_symbols": 837,
+      "non_outlier_topic_clusters": 32,
+      "outliers": 92,
+      "outlier_rate": 0.10991636798088411,
+      "assignment_meetings": {
+        "MSC 102": 168,
+        "MSC 103": 92,
+        "MSC 104": 97,
+        "MSC 105": 87,
+        "MSC 106": 79,
+        "MSC 107": 124,
+        "MSC 108": 93,
+        "MSC 109": 97
+      },
+      "raw_pdf_folders": {
+        "MSC 102": 172,
+        "MSC 103": 94,
+        "MSC 104": 101,
+        "MSC 105": 90,
+        "MSC 106": 82,
+        "MSC 107": 125,
+        "MSC 108": 94,
+        "MSC 109": 98
+      },
+      "symbol_meeting_mismatches": []
+    },
+    "CCC": {
+      "raw_pdf_files": 407,
+      "assignment_rows": 396,
+      "unique_assignment_symbols": 396,
+      "non_outlier_topic_clusters": 19,
+      "outliers": 65,
+      "outlier_rate": 0.16414141414141414,
+      "assignment_meetings": {
+        "CCC 7": 80,
+        "CCC 8": 93,
+        "CCC 9": 112,
+        "CCC 10": 111
+      },
+      "raw_pdf_folders": {
+        "CCC 10": 113,
+        "CCC 7": 85,
+        "CCC 8": 94,
+        "CCC 9": 115
+      },
+      "symbol_meeting_mismatches": []
+    },
+    "SSE": {
+      "raw_pdf_files": 355,
+      "assignment_rows": 349,
+      "unique_assignment_symbols": 349,
+      "non_outlier_topic_clusters": 12,
+      "outliers": 45,
+      "outlier_rate": 0.12893982808022922,
+      "assignment_meetings": {
+        "SSE 7": 87,
+        "SSE 8": 80,
+        "SSE 9": 62,
+        "SSE 10": 63,
+        "SSE 11": 57
+      },
+      "raw_pdf_folders": {
+        "SSE 10": 65,
+        "SSE 11": 57,
+        "SSE 7": 90,
+        "SSE 8": 80,
+        "SSE 9": 63
+      },
+      "symbol_meeting_mismatches": []
+    },
+    "ISWG-GHG": {
+      "raw_pdf_files": 227,
+      "assignment_rows": 85,
+      "unique_assignment_symbols": 85,
+      "non_outlier_topic_clusters": 3,
+      "outliers": 33,
+      "outlier_rate": 0.38823529411764707,
+      "assignment_meetings": {
+        "ISWG-GHG 16": 35,
+        "ISWG-GHG 17": 28,
+        "ISWG-GHG 18": 22
+      },
+      "raw_pdf_folders": {
+        "ISWG-GHG 10": 13,
+        "ISWG-GHG 11": 13,
+        "ISWG-GHG 12": 32,
+        "ISWG-GHG 13": 27,
+        "ISWG-GHG 14": 23,
+        "ISWG-GHG 15": 28,
+        "ISWG-GHG 16": 36,
+        "ISWG-GHG 17": 30,
+        "ISWG-GHG 18": 25
+      },
+      "symbol_meeting_mismatches": []
+    }
+  },
+  "source_sha256": {
+    "output/all_proposals_metadata.csv": "5869fea81aca77f762adcd4a6f7a590fbd8582de411f4fe3efd3cee14e287934",
+    "readme.md": "69a0fffd7bbf5a623d366de1734bf7496af10f6d8735f2be2e2ea95914a00846",
+    "paper/draft_v1.md": "088d91d92822194c4fad21d367a1a1221b6bb500eead3d4c0debb5f775fa1a38",
+    "output/MEPC/bertopic/bertopic_assignments_MEPC.csv": "12feabf82b49de5538553021a41cccb00109cbef22ca45e8f27dfe516f64e586",
+    "output/MSC/bertopic/bertopic_assignments_MSC.csv": "143487f59bf37057e73d638d8b491912a2bed991715350898fee8e581b1fe2a7",
+    "output/CCC/bertopic/bertopic_assignments_CCC.csv": "0e83e2179e9a9ed54c365b3089f44e86b4477a55c4f5ca6f99d6f0a1c1f95dcd",
+    "output/SSE/bertopic/bertopic_assignments_SSE.csv": "51fd8eac568504a7e86cdec1b4e3e83997733fc733c3a79814402f3e5325498a",
+    "output/ISWG-GHG/bertopic/bertopic_assignments_ISWG-GHG.csv": "9e46aa8f17635256f3602d741fb4ecfaffb4c81486c208974763f2fca07b3164"
+  },
+  "metadata": {
+    "rows": 2851,
+    "columns": [
+      "Council",
+      "Session",
+      "Date",
+      "Subject",
+      "Originator_split"
+    ],
+    "rows_by_council": {
+      "CCC": 405,
+      "ISWG-GHG": 88,
+      "MEPC": 1048,
+      "MSC": 955,
+      "SSE": 355
+    },
+    "warning": "Rows are not independently verified unique documents; no symbol column in this export"
+  },
+  "totals": {
+    "raw_pdf_files": 2898,
+    "assignment_rows": 2523,
+    "non_outlier_topic_clusters": 92,
+    "outliers": 306
+  }
+}

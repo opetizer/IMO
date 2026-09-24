@@ -13,7 +13,7 @@ import gensim
 import gensim.corpora as corpora
 from gensim.models import Phrases, LdaModel
 
-from nltk.corpus import wordnet, stopwords
+from nltk.corpus import wordnet
 from nltk.stem import WordNetLemmatizer
 
 # --- 引入新的数据读取模块 ---
@@ -39,9 +39,8 @@ text_folder = args.text_extracted_folder
 output_path = f'output/{args.title}/{args.subtitle}'
 json_file_path = os.path.join(text_folder, "data.json")
 
-stop_words = set(stopwords.words('english'))
-from stopword import additional_stopwords
-stop_words.update(additional_stopwords)
+from stopwords import STOPWORDS
+stop_words = STOPWORDS
 
 def setup_logger(log_file):
     logger = logging.getLogger(args.title)

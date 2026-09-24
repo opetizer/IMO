@@ -498,6 +498,52 @@ def generate_stance_report(matrix, topic_map, rec_df, committee, out_dir):
     return report_df
 
 
+def generate_stance_interpretation(matrix, topic_map, report_df, committee, out_dir):
+    """Generate interpretation TXT for country stance analysis."""
+    lines = [f"=== {committee} 国家/组织参与立场分析结果 ===\n"]
+
+    lines.append("一、基本统计")
+    if report_df is not None and not report_df.empty:
+        n_countries = len(report_df)
+        total_proposals = int(report_df['total_proposals'].sum())
+        lines.append(f"共分析 {n_countries} 个活跃国家/组织，总计 {total_proposals} 篇提案参与记录。\n")
+
+        lines.append("二、最活跃国家")
+        for _, row in report_df.head(5).iterrows():
+            lines.append(f"  {row['country']}: {int(row['total_proposals'])} 篇提案，"
+                        f"主要关注 {row['dominant_topic']}（占比 {row['dominant_share']:.1%}），"
+                        f"主题多样性 {row['topic_diversity']:.3f}")
+        lines.append("")
+
+        lines.append("三、主题偏好特征")
+        # Most focused vs most diverse
+        most_focused = report_df.nsmallest(3, 'topic_diversity')
+        most_diverse = report_df.nlargest(3, 'topic_diversity')
+        lines.append("最聚焦的国家（主题集中度高）:")
+        for _, row in most_focused.iterrows():
+            lines.append(f"  {row['country']} — 多样性 {row['topic_diversity']:.3f}，主攻 {row['dominant_topic']}")
+        lines.append("最多元的国家（参与主题广泛）:")
+        for _, row in most_diverse.iterrows():
+            lines.append(f"  {row['country']} — 多样性 {row['topic_diversity']:.3f}")
+        lines.append("")
+
+        lines.append("四、中国参与情况")
+        china_rows = report_df[report_df['country'].str.contains('China', case=False, na=False)]
+        if not china_rows.empty:
+            for _, row in china_rows.iterrows():
+                lines.append(f"  {row['country']}: {int(row['total_proposals'])} 篇提案，"
+                            f"主要关注 {row['dominant_topic']}，多样性 {row['topic_diversity']:.3f}")
+        else:
+            lines.append("  本次分析范围内未找到中国相关数据。")
+    else:
+        lines.append("无足够数据进行分析。")
+
+    txt_path = os.path.join(out_dir, f'stance_interpretation_{committee}.txt')
+    with open(txt_path, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(lines))
+    print(f"  Saved: {txt_path}")
+
+
 # ─────────────────── Cross-Committee ───────────────────
 
 def cross_committee_analysis(all_reports, all_matrices, out_dir):
@@ -612,6 +658,9 @@ def main():
         report = generate_stance_report(matrix, topic_map, rec_df, committee, comm_out)
         if report is not None:
             all_reports.append(report)
+        
+        # Generate interpretation TXT
+        generate_stance_interpretation(matrix, topic_map, report, committee, comm_out)
         
         all_matrices[committee] = matrix
     

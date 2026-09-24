@@ -359,15 +359,33 @@ def find_similar_pairs(sim_matrix, symbols, threshold=0.5, top_n=50):
 
 def draw_citation_network(G, hubs, out_path, title='Citation Network', top_n=50):
     """Draw static citation network (top cited docs)."""
-    # Subgraph: only include top hubs and their neighbors
+    # Subgraph: keep a compact hub-centered backbone for the static figure
     hub_symbols = set(h['symbol'] for h in hubs[:top_n])
     relevant_nodes = set()
+    max_predecessors = 4
+    max_successors = 2
     for h in hub_symbols:
         relevant_nodes.add(h)
-        for pred in G.predecessors(h):
+        preds = sorted(
+            G.predecessors(h),
+            key=lambda node: (G.in_degree(node), G.out_degree(node)),
+            reverse=True,
+        )[:max_predecessors]
+        succs = sorted(
+            G.successors(h),
+            key=lambda node: (G.in_degree(node), G.out_degree(node)),
+            reverse=True,
+        )[:max_successors]
+        for pred in preds:
             relevant_nodes.add(pred)
-    
+        for succ in succs:
+            relevant_nodes.add(succ)
+
     sub_G = G.subgraph(relevant_nodes).copy()
+    if len(sub_G) > 0:
+        components = list(nx.weakly_connected_components(sub_G))
+        if components:
+            sub_G = sub_G.subgraph(max(components, key=len)).copy()
 
     fig, ax = plt.subplots(1, 1, figsize=(20, 16))
     fig.patch.set_facecolor('white')
@@ -380,8 +398,12 @@ def draw_citation_network(G, hubs, out_path, title='Citation Network', top_n=50)
         return
 
     # Layout
-    pos = nx.spring_layout(sub_G, k=1.5 / (len(sub_G) ** 0.5 + 1),
-                           iterations=60, seed=42)
+    undirected_sub_G = sub_G.to_undirected()
+    try:
+        pos = nx.kamada_kawai_layout(undirected_sub_G)
+    except Exception:
+        pos = nx.spring_layout(sub_G, k=0.35 / (len(sub_G) ** 0.5 + 1),
+                               iterations=80, seed=42)
 
     # Color by meeting
     meetings = list(set(sub_G.nodes[n].get('meeting', 'unknown') for n in sub_G.nodes()))
@@ -405,13 +427,13 @@ def draw_citation_network(G, hubs, out_path, title='Citation Network', top_n=50)
 
     # Label only hubs
     hub_labels = {n: n for n in sub_G.nodes() if n in hub_symbols}
-    nx.draw_networkx_labels(sub_G, pos, labels=hub_labels, font_size=6,
-                            font_weight='bold', ax=ax)
+    nx.draw_networkx_labels(sub_G, pos, labels=hub_labels, font_size=25,
+                            font_weight='normal', ax=ax)
 
     # Legend
     patches = [mpatches.Patch(color=meeting_color[m], label=m) for m in meetings if m != 'unknown']
     if patches:
-        ax.legend(handles=patches, loc='lower left', fontsize=7, framealpha=0.8, ncol=2)
+        ax.legend(handles=patches, loc='lower left', fontsize=9, framealpha=0.8, ncol=2)
 
     ax.set_title(title, fontsize=14, fontweight='bold', pad=15)
     ax.axis('off')
@@ -581,6 +603,68 @@ def save_analysis(G, hubs, chains, similar_pairs, cluster_info, out_path):
     print(f'  Saved: {out_path}')
 
 
+def save_csv_and_txt(G, hubs, similar_pairs, chains, out_folder, prefix):
+    """Save CSV tables and interpretation TXT."""
+    import pandas as pd
+
+    # 1. Hub documents CSV
+    if hubs:
+        hub_df = pd.DataFrame(hubs)
+        hub_path = os.path.join(out_folder, f'citation_hubs_{prefix}.csv')
+        hub_df.to_csv(hub_path, index=False, encoding='utf-8-sig')
+        print(f'  Saved: {hub_path}')
+
+    # 2. Similar pairs CSV
+    if similar_pairs:
+        sim_df = pd.DataFrame(similar_pairs)
+        sim_path = os.path.join(out_folder, f'citation_similar_pairs_{prefix}.csv')
+        sim_df.to_csv(sim_path, index=False, encoding='utf-8-sig')
+        print(f'  Saved: {sim_path}')
+
+    # 3. Interpretation TXT
+    lines = [f"=== {prefix} 引用网络与文本相似度分析结果 ===\n"]
+
+    lines.append("一、引用网络概况")
+    n_nodes = G.number_of_nodes()
+    n_edges = G.number_of_edges()
+    internal = sum(1 for n in G.nodes() if G.nodes[n].get('meeting', 'unknown') != 'unknown')
+    external = n_nodes - internal
+    lines.append(f"共分析 {internal} 篇内部文档，引用 {external} 篇外部文档，总计 {n_edges} 条引用关系。")
+    lines.append(f"网络密度: {nx.density(G):.6f}\n")
+
+    lines.append("二、核心枢纽文档")
+    if hubs:
+        for h in hubs[:5]:
+            lines.append(f"  {h['symbol']} — 被引用 {h['in_degree']} 次")
+            if h.get('title'):
+                lines.append(f"    标题: {h['title'][:80]}")
+    else:
+        lines.append("  未发现高被引文档。")
+    lines.append("")
+
+    lines.append("三、文本相似度分析")
+    if similar_pairs:
+        lines.append(f"共发现 {len(similar_pairs)} 对高相似度文档对。")
+        for p in similar_pairs[:3]:
+            lines.append(f"  {p['doc_a']} ↔ {p['doc_b']} (相似度: {p['similarity']:.3f})")
+    else:
+        lines.append("  未发现显著相似文档对。")
+    lines.append("")
+
+    lines.append("四、政策演化链")
+    if chains:
+        lines.append(f"共发现 {len(chains)} 条政策演化链，最长链含 {chains[0]['length']} 篇文档。")
+        for c in chains[:3]:
+            lines.append(f"  主题: {c['title'][:60]} | 链长: {c['length']}")
+    else:
+        lines.append("  未发现显著演化链。")
+
+    txt_path = os.path.join(out_folder, f'citation_interpretation_{prefix}.txt')
+    with open(txt_path, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(lines))
+    print(f'  Saved: {txt_path}')
+
+
 # ───────────────────── main ─────────────────────
 
 def main():
@@ -687,6 +771,9 @@ def main():
         G, hubs, chains, similar_pairs, cluster_info,
         os.path.join(out_folder, f'citation_analysis_{prefix}.json'),
     )
+
+    # Save CSV and interpretation TXT
+    save_csv_and_txt(G, hubs, similar_pairs, chains, out_folder, prefix)
 
     print('\nDone!')
 

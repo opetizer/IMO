@@ -305,6 +305,85 @@ def plot_cross_theme_trends(all_timelines, out_dir):
     print(f"  Saved: {path}")
 
 
+def save_trends_csv_and_txt(trends, committee, out_dir):
+    """Save trend CSV and interpretation TXT per committee."""
+    import pandas as pd
+
+    # CSV
+    if trends:
+        trend_df = pd.DataFrame(trends)
+        csv_path = os.path.join(out_dir, f'topic_trends_{committee}.csv')
+        trend_df.to_csv(csv_path, index=False, encoding='utf-8-sig')
+        print(f"  Saved: {csv_path}")
+
+    # TXT
+    lines = [f"=== {committee} 动态主题演进分析结果 ===\n"]
+    rising = [t for t in trends if t['trend'] == 'rising']
+    declining = [t for t in trends if t['trend'] == 'declining']
+    stable = [t for t in trends if t['trend'] == 'stable']
+
+    lines.append("一、基本统计")
+    lines.append(f"共分析 {len(trends)} 个主题的时间趋势，其中 {len(rising)} 个上升、"
+                 f"{len(declining)} 个下降、{len(stable)} 个稳定。\n")
+
+    lines.append("二、上升趋势主题")
+    if rising:
+        for t in rising[:5]:
+            lines.append(f"  {t['topic_label'][:50]} — 斜率 {t['slope']:.4f}，相对变化 {t['relative_change']:+.1%}")
+    else:
+        lines.append("  无显著上升趋势主题。")
+    lines.append("")
+
+    lines.append("三、下降趋势主题")
+    if declining:
+        for t in declining[:5]:
+            lines.append(f"  {t['topic_label'][:50]} — 斜率 {t['slope']:.4f}，相对变化 {t['relative_change']:+.1%}")
+    else:
+        lines.append("  无显著下降趋势主题。")
+    lines.append("")
+
+    lines.append("四、稳定核心议题")
+    # Top stable by mean proportion
+    stable_sorted = sorted(stable, key=lambda x: x['mean_proportion'], reverse=True)
+    for t in stable_sorted[:3]:
+        lines.append(f"  {t['topic_label'][:50]} — 平均占比 {t['mean_proportion']:.3f}")
+
+    txt_path = os.path.join(out_dir, f'dynamic_interpretation_{committee}.txt')
+    with open(txt_path, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(lines))
+    print(f"  Saved: {txt_path}")
+
+
+def save_overall_interpretation(all_trends, out_dir):
+    """Save cross-committee dynamic interpretation."""
+    lines = ["=== 跨委员会动态主题演进总体分析 ===\n"]
+
+    committees = sorted(set(t['committee'] for t in all_trends))
+    lines.append("一、各委员会主题趋势概览")
+    for comm in committees:
+        ct = [t for t in all_trends if t['committee'] == comm]
+        rising = len([t for t in ct if t['trend'] == 'rising'])
+        declining = len([t for t in ct if t['trend'] == 'declining'])
+        lines.append(f"  {comm}: {len(ct)} 个主题，{rising} 个上升，{declining} 个下降")
+    lines.append("")
+
+    lines.append("二、全局最显著上升主题")
+    all_rising = sorted([t for t in all_trends if t['slope'] > 0], key=lambda x: x['slope'], reverse=True)
+    for t in all_rising[:5]:
+        lines.append(f"  [{t['committee']}] {t['topic_label'][:45]} — 斜率 {t['slope']:.4f}")
+    lines.append("")
+
+    lines.append("三、全局最显著下降主题")
+    all_declining = sorted([t for t in all_trends if t['slope'] < 0], key=lambda x: x['slope'])
+    for t in all_declining[:5]:
+        lines.append(f"  [{t['committee']}] {t['topic_label'][:45]} — 斜率 {t['slope']:.4f}")
+
+    txt_path = os.path.join(out_dir, 'dynamic_interpretation_overall.txt')
+    with open(txt_path, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(lines))
+    print(f"  Saved: {txt_path}")
+
+
 def main():
     parser = argparse.ArgumentParser(description='Cross-Committee Dynamic Topic Analysis')
     parser.add_argument('--committees', nargs='+', default=['MEPC', 'MSC', 'CCC', 'SSE', 'ISWG-GHG'])
@@ -343,6 +422,9 @@ def main():
         trends = detect_trends(timeline, committee)
         all_trends.extend(trends)
         
+        # Save CSV and interpretation
+        save_trends_csv_and_txt(trends, committee, comm_out)
+        
         # Print top trends
         rising = [t for t in trends if t['trend'] == 'rising']
         declining = [t for t in trends if t['trend'] == 'declining']
@@ -379,6 +461,10 @@ def main():
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
     print(f"\n  Saved: {path}")
+    
+    # Save overall interpretation
+    if all_trends:
+        save_overall_interpretation(all_trends, out_dir)
     
     print("\nDynamic topic analysis complete!")
 

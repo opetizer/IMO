@@ -34,14 +34,9 @@ def split_originator(originator_str):
     return [item.strip() for item in cleaned.split(',') if item.strip()]
 
 def get_stopwords():
-    """定义停用词集合"""
-    # 基础停用词
-    from nltk.corpus import stopwords
-    from stopword import additional_stopwords
-    # 添加自定义停用词
-    custom_stopwords = additional_stopwords.copy()
-    custom_stopwords.update(set(stopwords.words('english')))
-    return custom_stopwords
+    """返回统一停用词集合"""
+    from stopwords import STOPWORDS
+    return STOPWORDS
 
 def main():
     args = parse_args()

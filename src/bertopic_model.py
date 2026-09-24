@@ -37,6 +37,12 @@ from sentence_transformers import SentenceTransformer
 from umap import UMAP
 from hdbscan import HDBSCAN
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics import (
+    adjusted_rand_score,
+    calinski_harabasz_score,
+    davies_bouldin_score,
+    silhouette_score,
+)
 
 try:
     import plotly.express as px
@@ -44,6 +50,19 @@ try:
     HAS_PLOTLY = True
 except ImportError:
     HAS_PLOTLY = False
+
+try:
+    from wordcloud import WordCloud
+    HAS_WORDCLOUD = True
+except ImportError:
+    HAS_WORDCLOUD = False
+
+try:
+    from gensim.corpora import Dictionary
+    from gensim.models.coherencemodel import CoherenceModel
+    HAS_GENSIM = True
+except ImportError:
+    HAS_GENSIM = False
 
 
 # ───────────────────── helpers ─────────────────────
@@ -84,20 +103,8 @@ def normalize_symbol(sym):
 
 # ───────────────────── stopwords ─────────────────────
 
-# Domain-specific stopwords for IMO documents
-IMO_STOPWORDS = {
-    'document', 'committee', 'annex', 'paragraph', 'meeting', 'session',
-    'agenda', 'item', 'note', 'secretariat', 'invited', 'approval',
-    'consideration', 'report', 'information', 'page', 'resolution',
-    'regulation', 'amendment', 'proposal', 'guidelines', 'draft',
-    'organization', 'sub', 'ref', 'attached', 'related', 'submitted',
-    'following', 'accordance', 'regard', 'relevant', 'associated',
-    'concerning', 'assembly', 'recognized', 'appropriate', 'general',
-    'particular', 'provisions', 'request', 'action',
-    'may', 'shall', 'also', 'would', 'could', 'should', 'one',
-    'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
-    'mepc', 'msc', 'ccc', 'sse', 'iswg', 'ghg', 'inf', 'wp',
-}
+from stopwords import STOPWORDS
+from spacy_pipeline import build_topic_analyzer
 
 
 # ───────────────────── data loading ─────────────────────
@@ -148,7 +155,7 @@ def extract_session_number(meeting_name):
 # ───────────────────── BERTopic pipeline ─────────────────────
 
 def build_bertopic_model(docs, min_topic_size=10, embedding_model_name='all-MiniLM-L6-v2',
-                         nr_topics='auto'):
+                         nr_topics='auto', random_state=42, embedding_batch_size=32):
     """
     Build and fit BERTopic model.
     Returns: topic_model, topics, probs, embeddings
@@ -159,7 +166,11 @@ def build_bertopic_model(docs, min_topic_size=10, embedding_model_name='all-Mini
     embedding_model = SentenceTransformer(embedding_model_name)
 
     print(f'  Computing embeddings for {len(texts)} documents...')
-    embeddings = embedding_model.encode(texts, show_progress_bar=True, batch_size=32)
+    embeddings = embedding_model.encode(
+        texts,
+        show_progress_bar=True,
+        batch_size=embedding_batch_size,
+    )
 
     # UMAP for dimensionality reduction
     umap_model = UMAP(
@@ -167,7 +178,7 @@ def build_bertopic_model(docs, min_topic_size=10, embedding_model_name='all-Mini
         n_components=5,
         min_dist=0.0,
         metric='cosine',
-        random_state=42,
+        random_state=random_state,
     )
 
     # HDBSCAN for clustering
@@ -179,19 +190,13 @@ def build_bertopic_model(docs, min_topic_size=10, embedding_model_name='all-Mini
         prediction_data=True,
     )
 
-    # Vectorizer with domain stopwords
-    all_stopwords = list(IMO_STOPWORDS)
-    try:
-        from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
-        all_stopwords.extend(list(ENGLISH_STOP_WORDS))
-    except ImportError:
-        pass
-
+    # Vectorizer with shared spaCy tokenizer so domain phrases stay intact.
     vectorizer_model = CountVectorizer(
-        stop_words=all_stopwords,
+        analyzer=build_topic_analyzer(stopwords=STOPWORDS),
         min_df=3,
         max_df=0.95,
-        ngram_range=(1, 3),
+        lowercase=False,
+        token_pattern=None,
     )
 
     # Representation models for better topic labels
@@ -213,13 +218,218 @@ def build_bertopic_model(docs, min_topic_size=10, embedding_model_name='all-Mini
         calculate_probabilities=True,
     )
 
-    topics, probs = topic_model.fit_transform(texts, embeddings)
+    try:
+        topics, probs = topic_model.fit_transform(texts, embeddings)
+    except ValueError as e:
+        if 'max_df corresponds to < documents than min_df' not in str(e):
+            raise
+        print('  Retrying BERTopic with fallback vectorizer (min_df=1, max_df=1.0)...')
+        fallback_vectorizer = CountVectorizer(
+            analyzer=build_topic_analyzer(stopwords=STOPWORDS),
+            min_df=1,
+            max_df=1.0,
+            lowercase=False,
+            token_pattern=None,
+        )
+        topic_model = BERTopic(
+            embedding_model=embedding_model,
+            umap_model=umap_model,
+            hdbscan_model=hdbscan_model,
+            vectorizer_model=fallback_vectorizer,
+            representation_model=representation_model,
+            nr_topics=nr_topics,
+            top_n_words=15,
+            verbose=True,
+            calculate_probabilities=True,
+        )
+        topics, probs = topic_model.fit_transform(texts, embeddings)
 
     # Ensure topics is a list for consistent .count() usage
     if not isinstance(topics, list):
         topics = list(topics)
 
     return topic_model, topics, probs, embeddings
+
+
+def _build_topic_model_for_embeddings(min_topic_size=10, nr_topics='auto', random_state=42):
+    """Build BERTopic model that consumes precomputed embeddings."""
+    umap_model = UMAP(
+        n_neighbors=15,
+        n_components=5,
+        min_dist=0.0,
+        metric='cosine',
+        random_state=random_state,
+    )
+
+    hdbscan_model = HDBSCAN(
+        min_cluster_size=min_topic_size,
+        min_samples=3,
+        metric='euclidean',
+        cluster_selection_method='eom',
+        prediction_data=True,
+    )
+
+    vectorizer_model = CountVectorizer(
+        analyzer=build_topic_analyzer(stopwords=STOPWORDS),
+        min_df=1,
+        max_df=1.0,
+        lowercase=False,
+        token_pattern=None,
+    )
+
+    return BERTopic(
+        embedding_model=None,
+        umap_model=umap_model,
+        hdbscan_model=hdbscan_model,
+        vectorizer_model=vectorizer_model,
+        representation_model=None,
+        nr_topics=nr_topics,
+        top_n_words=15,
+        verbose=False,
+        calculate_probabilities=False,
+    )
+
+
+def run_validation_experiments(topic_model, docs, topics, embeddings, out_folder, prefix,
+                               min_topic_size=10, nr_topics='auto', seed_list=None):
+    """Run supplementary validation experiments for BERTopic outputs."""
+    if seed_list is None:
+        seed_list = [13, 42, 77]
+
+    texts = [d['full_text'] for d in docs]
+    labels = np.array(topics)
+    mask = labels != -1
+
+    quality = {}
+    if mask.sum() >= 10 and len(np.unique(labels[mask])) >= 2:
+        emb = np.asarray(embeddings)
+        quality['silhouette'] = float(silhouette_score(emb[mask], labels[mask], metric='cosine'))
+        quality['calinski_harabasz'] = float(calinski_harabasz_score(emb[mask], labels[mask]))
+        quality['davies_bouldin'] = float(davies_bouldin_score(emb[mask], labels[mask]))
+    else:
+        quality['silhouette'] = None
+        quality['calinski_harabasz'] = None
+        quality['davies_bouldin'] = None
+
+    # Topic diversity: unique words among top-10 words across all valid topics.
+    topic_info = topic_model.get_topic_info()
+    valid_topics = topic_info[topic_info['Topic'] != -1]['Topic'].tolist()
+    all_top_words = []
+    for tid in valid_topics:
+        words = topic_model.get_topic(tid) or []
+        all_top_words.extend([w for w, _ in words[:10]])
+    diversity = len(set(all_top_words)) / max(len(all_top_words), 1)
+    quality['topic_diversity_top10'] = round(float(diversity), 4)
+
+    # Coherence with gensim (optional)
+    if HAS_GENSIM:
+        tokenized_docs = [build_topic_analyzer(stopwords=STOPWORDS)(t) for t in texts]
+        dictionary = Dictionary(tokenized_docs)
+        topic_word_lists = []
+        for tid in valid_topics:
+            words = topic_model.get_topic(tid) or []
+            clean_words = [w for w, _ in words[:10] if w in dictionary.token2id]
+            if len(clean_words) >= 2:
+                topic_word_lists.append(clean_words)
+
+        if topic_word_lists and len(dictionary) > 0:
+            try:
+                c_v = CoherenceModel(
+                    topics=topic_word_lists,
+                    texts=tokenized_docs,
+                    dictionary=dictionary,
+                    coherence='c_v',
+                ).get_coherence()
+                quality['coherence_c_v'] = float(c_v)
+            except Exception:
+                quality['coherence_c_v'] = None
+
+            try:
+                corpus = [dictionary.doc2bow(doc) for doc in tokenized_docs]
+                u_mass = CoherenceModel(
+                    topics=topic_word_lists,
+                    corpus=corpus,
+                    dictionary=dictionary,
+                    coherence='u_mass',
+                ).get_coherence()
+                quality['coherence_u_mass'] = float(u_mass)
+            except Exception:
+                quality['coherence_u_mass'] = None
+        else:
+            quality['coherence_c_v'] = None
+            quality['coherence_u_mass'] = None
+    else:
+        quality['coherence_c_v'] = None
+        quality['coherence_u_mass'] = None
+
+    stability_rows = []
+    baseline = np.array(topics)
+    for seed in seed_list:
+        tmp_model = _build_topic_model_for_embeddings(
+            min_topic_size=min_topic_size,
+            nr_topics=nr_topics,
+            random_state=int(seed),
+        )
+        tmp_topics, _ = tmp_model.fit_transform(texts, embeddings)
+        tmp_topics = np.array(tmp_topics)
+
+        ari_all = float(adjusted_rand_score(baseline, tmp_topics))
+        both_valid = (baseline != -1) & (tmp_topics != -1)
+        if both_valid.sum() >= 10 and len(np.unique(baseline[both_valid])) >= 2 and len(np.unique(tmp_topics[both_valid])) >= 2:
+            ari_no_outlier = float(adjusted_rand_score(baseline[both_valid], tmp_topics[both_valid]))
+        else:
+            ari_no_outlier = None
+
+        n_topics_seed = len(set(tmp_topics.tolist())) - (1 if -1 in tmp_topics else 0)
+        outlier_rate_seed = float((tmp_topics == -1).sum() / max(len(tmp_topics), 1))
+
+        stability_rows.append({
+            'seed': int(seed),
+            'ari_vs_baseline_all': round(ari_all, 4),
+            'ari_vs_baseline_no_outlier': (round(ari_no_outlier, 4) if ari_no_outlier is not None else None),
+            'n_topics': int(n_topics_seed),
+            'outlier_rate': round(outlier_rate_seed, 4),
+        })
+
+    stab_df = pd.DataFrame(stability_rows)
+    stab_csv = os.path.join(out_folder, f'bertopic_validation_stability_{prefix}.csv')
+    stab_df.to_csv(stab_csv, index=False, encoding='utf-8-sig')
+    print(f'  Saved: {os.path.basename(stab_csv)}')
+
+    if not stab_df.empty:
+        fig, ax = plt.subplots(figsize=(8, 4.8))
+        x = np.arange(len(stab_df))
+        ax.plot(x, stab_df['ari_vs_baseline_all'], marker='o', label='ARI (all)')
+        if stab_df['ari_vs_baseline_no_outlier'].notna().any():
+            ax.plot(x, stab_df['ari_vs_baseline_no_outlier'], marker='s', label='ARI (no outlier)')
+        ax.set_xticks(x, [str(s) for s in stab_df['seed']])
+        ax.set_ylim(0, 1)
+        ax.set_xlabel('Random seed')
+        ax.set_ylabel('Agreement with baseline')
+        ax.set_title(f'{prefix} BERTopic Seed Stability')
+        ax.grid(alpha=0.25)
+        ax.legend(loc='lower right')
+        fig.tight_layout()
+        stab_png = os.path.join(out_folder, f'bertopic_validation_stability_{prefix}.png')
+        fig.savefig(stab_png, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        print(f'  Saved: {os.path.basename(stab_png)}')
+
+    report = {
+        'quality_metrics': quality,
+        'baseline': {
+            'n_documents': int(len(docs)),
+            'n_topics': int(len(set(topics)) - (1 if -1 in topics else 0)),
+            'outlier_rate': round(float(np.mean(np.array(topics) == -1)), 4),
+        },
+        'seed_stability': stability_rows,
+        'seed_list': [int(s) for s in seed_list],
+    }
+
+    out_json = os.path.join(out_folder, f'bertopic_validation_{prefix}.json')
+    with open(out_json, 'w', encoding='utf-8') as f:
+        json.dump(report, f, ensure_ascii=False, indent=2)
+    print(f'  Saved: {os.path.basename(out_json)}')
 
 
 # ───────────────────── dynamic topics ─────────────────────
@@ -302,6 +512,115 @@ def analyze_country_topics(docs, topics, topic_model):
 
 
 # ───────────────────── visualization ─────────────────────
+
+def generate_wordclouds(topic_model, out_folder, prefix, n_topics=6):
+    """Generate word cloud PNG for the top n_topics representative topics."""
+    if not HAS_WORDCLOUD:
+        print('  Skipping word clouds: wordcloud package not installed')
+        return
+
+    topic_info = topic_model.get_topic_info()
+    # Filter out outlier topic (-1), take top n by doc count (already sorted)
+    valid_topics = topic_info[topic_info['Topic'] != -1].head(n_topics)
+    n = len(valid_topics)
+    if n == 0:
+        return
+
+    cols = 3
+    rows = 2
+    fig, axes = plt.subplots(rows, cols, figsize=(cols * 5, rows * 4))
+    axes = axes.reshape(rows, cols)
+
+    for idx, (_, row) in enumerate(valid_topics.iterrows()):
+        tid = row['Topic']
+        topic_words = topic_model.get_topic(tid)
+        if not topic_words:
+            continue
+        # Build frequency dict from c-TF-IDF scores (shift to positive)
+        min_score = min(s for _, s in topic_words)
+        freq = {w.replace('_', ' '): float(s - min_score + 1e-6) for w, s in topic_words}
+
+        _reds  = ['#B71C1C', '#C62828', '#D32F2F', '#E53935', '#F44336']
+        _blues = ['#0D47A1', '#1565C0', '#1976D2', '#1E88E5', '#2196F3']
+        import random as _rnd
+        def _rb_color(word, font_size, position, orientation, random_state=None, **kw):
+            pool = _reds if font_size > 60 else _blues
+            return _rnd.choice(pool)
+
+        wc = WordCloud(
+            width=800, height=600,
+            background_color='white',
+            max_words=15,
+            color_func=_rb_color,
+            prefer_horizontal=1.0,
+            min_font_size=14,
+            max_font_size=200,
+            relative_scaling=0.3,
+        ).generate_from_frequencies(freq)
+
+        r, c = divmod(idx, cols)
+        ax = axes[r][c]
+        ax.imshow(wc, interpolation='bilinear')
+        ax.axis('off')
+        short_name = row['Name'][:45] + '…' if len(row['Name']) > 45 else row['Name']
+        ax.set_title(f'Topic {tid}: {short_name}\n({int(row["Count"])} docs)',
+                     fontsize=8, pad=4)
+
+    # Hide unused axes
+    for idx in range(n, rows * cols):
+        r, c = divmod(idx, cols)
+        axes[r][c].axis('off')
+
+    fig.suptitle(f'{prefix} – BERTopic Word Clouds', fontsize=13, y=1.01)
+    fig.tight_layout()
+    out_path = os.path.join(out_folder, f'bertopic_wordclouds_{prefix}.png')
+    fig.savefig(out_path, dpi=150, bbox_inches='tight')
+    plt.close(fig)
+    print(f'  Saved: bertopic_wordclouds_{prefix}.png')
+
+
+def generate_topic_doc_stats(topic_model, topics, out_folder, prefix):
+    """Generate a bar chart of document count per topic (sorted descending)."""
+    topic_info = topic_model.get_topic_info()
+    # Exclude outliers
+    df = topic_info[topic_info['Topic'] != -1].copy()
+    if df.empty:
+        return
+    df = df.sort_values('Count', ascending=True)  # horizontal bar: largest at top
+
+    fig, ax = plt.subplots(figsize=(10, max(5, len(df) * 0.35)))
+    colors = plt.cm.RdYlGn(np.linspace(0.2, 0.85, len(df)))
+    bars = ax.barh(range(len(df)), df['Count'], color=colors, edgecolor='white', linewidth=0.5)
+
+    # Labels on bars
+    for bar, val in zip(bars, df['Count']):
+        ax.text(bar.get_width() + 0.5, bar.get_y() + bar.get_height() / 2,
+                str(int(val)), va='center', ha='left', fontsize=7)
+
+    short_names = [
+        (n[:50] + '…' if len(n) > 50 else n) for n in df['Name']
+    ]
+    ax.set_yticks(range(len(df)))
+    ax.set_yticklabels(short_names, fontsize=7)
+    ax.set_xlabel('Number of Documents', fontsize=10)
+    ax.set_title(f'{prefix} – Documents per Topic', fontsize=12, pad=12)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.set_xlim(0, df['Count'].max() * 1.15)
+
+    # Outlier annotation
+    n_outliers = topics.count(-1)
+    outlier_pct = n_outliers / max(len(topics), 1) * 100
+    fig.text(0.98, 0.02,
+             f'Outliers (topic -1): {n_outliers} docs ({outlier_pct:.1f}%)',
+             ha='right', va='bottom', fontsize=8, color='grey')
+
+    fig.tight_layout()
+    out_path = os.path.join(out_folder, f'bertopic_topic_stats_{prefix}.png')
+    fig.savefig(out_path, dpi=150, bbox_inches='tight')
+    plt.close(fig)
+    print(f'  Saved: bertopic_topic_stats_{prefix}.png')
+
 
 def save_visualizations(topic_model, docs, topics, probs, embeddings,
                         topics_over_time, country_df, out_folder, prefix):
@@ -413,6 +732,12 @@ def save_visualizations(topic_model, docs, topics, probs, embeddings,
     )
     print(f'  Saved: bertopic_assignments_{prefix}.csv')
 
+    # 10. Word clouds (new)
+    generate_wordclouds(topic_model, out_folder, prefix)
+
+    # 11. Topic-document statistics bar chart (new)
+    generate_topic_doc_stats(topic_model, topics, out_folder, prefix)
+
 
 # ───────────────────── analysis stats ─────────────────────
 
@@ -473,11 +798,17 @@ def main():
                         help='Minimum cluster size for HDBSCAN')
     parser.add_argument('--embedding_model', type=str, default='all-MiniLM-L6-v2',
                         help='Sentence-BERT model name')
+    parser.add_argument('--embedding_batch_size', type=int, default=32,
+                        help='Embedding batch size for SentenceTransformer.encode')
     parser.add_argument('--nr_topics', type=str, default='auto',
                         help='Number of topics ("auto" or integer)')
     parser.add_argument('--dynamic', action='store_true',
                         help='Run dynamic topic modeling (evolution over time)')
     parser.add_argument('--out_folder', type=str, default=None)
+    parser.add_argument('--validation', action='store_true',
+                        help='Run supplementary validation experiments')
+    parser.add_argument('--validation_seeds', type=str, default='13,42,77',
+                        help='Comma-separated random seeds for stability checks')
     args = parser.parse_args()
 
     base = args.meeting_folder
@@ -513,6 +844,8 @@ def main():
         min_topic_size=args.min_topic_size,
         embedding_model_name=args.embedding_model,
         nr_topics=nr_topics,
+        random_state=42,
+        embedding_batch_size=args.embedding_batch_size,
     )
     n_topics = len(set(topics)) - (1 if -1 in topics else 0)
     n_outliers = topics.count(-1)
@@ -538,6 +871,24 @@ def main():
                         topics_over_time, country_df, out_folder, prefix)
     save_analysis(topic_model, docs, topics, country_df,
                   os.path.join(out_folder, f'bertopic_analysis_{prefix}.json'), prefix)
+
+    if args.validation:
+        print('\n[extra] Running validation experiments...')
+        try:
+            seed_list = [int(s.strip()) for s in args.validation_seeds.split(',') if s.strip()]
+        except ValueError:
+            seed_list = [13, 42, 77]
+        run_validation_experiments(
+            topic_model,
+            docs,
+            topics,
+            embeddings,
+            out_folder,
+            prefix,
+            min_topic_size=args.min_topic_size,
+            nr_topics=nr_topics,
+            seed_list=seed_list,
+        )
 
     # Save the model
     model_path = os.path.join(out_folder, f'bertopic_model_{prefix}')

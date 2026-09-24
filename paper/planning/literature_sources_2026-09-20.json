@@ -1,0 +1,1740 @@
+[
+  {
+    "id": "L01",
+    "doi": "10.1016/j.marpol.2022.105379",
+    "title": "IMO off course for decarbonisation of shipping? Three challenges for stricter policy",
+    "url": "https://www.sciencedirect.com/science/article/pii/S0308597X22004262",
+    "reading_level": "出版社摘要与亮点",
+    "relevance": "制度能力、授权边界和政治共识；作为机制解释起点。",
+    "accessed": "2026-09-20",
+    "status": "published article or scholarly chapter",
+    "crossref": {
+      "DOI": "10.1016/j.marpol.2022.105379",
+      "title": [
+        "IMO off course for decarbonisation of shipping? Three challenges for stricter policy"
+      ],
+      "author": [
+        {
+          "ORCID": "https://orcid.org/0000-0002-6749-7053",
+          "authenticated-orcid": false,
+          "given": "Hanna",
+          "family": "Bach",
+          "sequence": "first",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        },
+        {
+          "given": "Teis",
+          "family": "Hansen",
+          "sequence": "additional",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        }
+      ],
+      "container-title": [
+        "Marine Policy"
+      ],
+      "published": {
+        "date-parts": [
+          [
+            2023,
+            1
+          ]
+        ]
+      },
+      "published-online": null,
+      "published-print": {
+        "date-parts": [
+          [
+            2023,
+            1
+          ]
+        ]
+      },
+      "volume": "147",
+      "issue": null,
+      "page": "105379",
+      "article-number": "105379",
+      "type": "journal-article"
+    },
+    "publication_display": "2023-01",
+    "authors_display": "Hanna Bach; Teis Hansen",
+    "venue_display": "Marine Policy",
+    "title_verified": "IMO off course for decarbonisation of shipping? Three challenges for stricter policy"
+  },
+  {
+    "id": "L02",
+    "doi": "10.1016/j.marpol.2024.106332",
+    "title": "How to implement the 2023 IMO GHG strategy? Insights on the importance of combining policy instruments and on the role of uncertainty",
+    "url": "https://www.sciencedirect.com/science/article/pii/S0308597X24003300",
+    "reading_level": "出版社索引摘要与亮点",
+    "relevance": "政策工具组合已有实质研究；区分碳价、标准及其条件。",
+    "accessed": "2026-09-20",
+    "status": "published article or scholarly chapter",
+    "crossref": {
+      "DOI": "10.1016/j.marpol.2024.106332",
+      "title": [
+        "How to implement the 2023 IMO GHG strategy? Insights on the importance of combining policy instruments and on the role of uncertainty"
+      ],
+      "author": [
+        {
+          "given": "Laurence",
+          "family": "Cret",
+          "sequence": "first",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        },
+        {
+          "given": "Marc",
+          "family": "Baudry",
+          "sequence": "additional",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        },
+        {
+          "given": "Frédéric",
+          "family": "Lantz",
+          "sequence": "additional",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        }
+      ],
+      "container-title": [
+        "Marine Policy"
+      ],
+      "published": {
+        "date-parts": [
+          [
+            2024,
+            11
+          ]
+        ]
+      },
+      "published-online": null,
+      "published-print": {
+        "date-parts": [
+          [
+            2024,
+            11
+          ]
+        ]
+      },
+      "volume": "169",
+      "issue": null,
+      "page": "106332",
+      "article-number": "106332",
+      "type": "journal-article"
+    },
+    "publication_display": "2024-11",
+    "authors_display": "Laurence Cret; Marc Baudry; Frédéric Lantz",
+    "venue_display": "Marine Policy",
+    "title_verified": "How to implement the 2023 IMO GHG strategy? Insights on the importance of combining policy instruments and on the role of uncertainty"
+  },
+  {
+    "id": "L03",
+    "doi": "10.1007/s10784-024-09661-x",
+    "title": "Making waves or ripples? The influence of the European Green Deal on the revised IMO GHG strategy",
+    "url": "https://link.springer.com/article/10.1007/s10784-024-09661-x",
+    "reading_level": "出版社摘要、数据声明与参考文献",
+    "relevance": "政策影响已有过程研究，需明确我们的文档证据增量。",
+    "accessed": "2026-09-20",
+    "status": "published article or scholarly chapter",
+    "crossref": {
+      "DOI": "10.1007/s10784-024-09661-x",
+      "title": [
+        "Making waves or ripples? The influence of the European Green Deal on the revised IMO GHG strategy"
+      ],
+      "author": [
+        {
+          "ORCID": "https://orcid.org/0000-0003-4636-788X",
+          "authenticated-orcid": false,
+          "given": "Joseph",
+          "family": "Earsom",
+          "sequence": "first",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        }
+      ],
+      "container-title": [
+        "International Environmental Agreements: Politics, Law and Economics"
+      ],
+      "published": {
+        "date-parts": [
+          [
+            2025,
+            1,
+            27
+          ]
+        ]
+      },
+      "published-online": {
+        "date-parts": [
+          [
+            2025,
+            1,
+            27
+          ]
+        ]
+      },
+      "published-print": {
+        "date-parts": [
+          [
+            2025,
+            6
+          ]
+        ]
+      },
+      "volume": "25",
+      "issue": "2",
+      "page": "231-246",
+      "article-number": null,
+      "type": "journal-article"
+    },
+    "publication_display": "2025-01-27",
+    "authors_display": "Joseph Earsom",
+    "venue_display": "International Environmental Agreements: Politics, Law and Economics",
+    "title_verified": "Making waves or ripples? The influence of the European Green Deal on the revised IMO GHG strategy"
+  },
+  {
+    "id": "L04",
+    "doi": "10.1177/01622439241279622",
+    "title": "Out of Sync: The Making and Remaking of Data and Regulations on Greenhouse Gases at the International Maritime Organization",
+    "url": "https://journals.sagepub.com/doi/10.1177/01622439241279622",
+    "reading_level": "出版社摘要与正文选段",
+    "relevance": "数据需求兼具促进共识与拖延效应，不能自动将进一步研究归为反对。",
+    "accessed": "2026-09-20",
+    "status": "published article or scholarly chapter",
+    "crossref": {
+      "DOI": "10.1177/01622439241279622",
+      "title": [
+        "Out of Sync: The Making and Remaking of Data and Regulations on Greenhouse Gases at the International Maritime Organization"
+      ],
+      "author": [
+        {
+          "ORCID": "https://orcid.org/0000-0001-6882-5103",
+          "authenticated-orcid": false,
+          "given": "Kjersti",
+          "family": "Aalbu",
+          "sequence": "first",
+          "affiliation": [
+            {
+              "name": "University of Oslo"
+            },
+            {
+              "name": "DNV AS, Høvik, Norway"
+            }
+          ],
+          "role": [
+            {
+              "role": "author",
+              "vocabulary": "crossref"
+            }
+          ]
+        }
+      ],
+      "container-title": [
+        "Science, Technology, &amp; Human Values"
+      ],
+      "published": {
+        "date-parts": [
+          [
+            2024,
+            8,
+            30
+          ]
+        ]
+      },
+      "published-online": {
+        "date-parts": [
+          [
+            2024,
+            8,
+            30
+          ]
+        ]
+      },
+      "published-print": {
+        "date-parts": [
+          [
+            2026,
+            1
+          ]
+        ]
+      },
+      "volume": "51",
+      "issue": "1",
+      "page": "107-132",
+      "article-number": null,
+      "type": "journal-article"
+    },
+    "publication_display": "在线 2024-08-30；卷期 2026",
+    "authors_display": "Kjersti Aalbu",
+    "venue_display": "Science, Technology, & Human Values",
+    "title_verified": "Out of Sync: The Making and Remaking of Data and Regulations on Greenhouse Gases at the International Maritime Organization"
+  },
+  {
+    "id": "L05",
+    "doi": "10.1016/j.jenvman.2026.129703",
+    "title": "Evaluating multi-level policy coherence in maritime decarbonization: A design–framing alignment approach",
+    "url": "https://research.chalmers.se/en/publication/551795",
+    "reading_level": "作者机构库摘要与书目",
+    "relevance": "12份政策文件的设计—框架一致性；跨层级比较已存在。",
+    "accessed": "2026-09-20",
+    "status": "published article or scholarly chapter",
+    "crossref": {
+      "DOI": "10.1016/j.jenvman.2026.129703",
+      "title": [
+        "Evaluating multi-level policy coherence in maritime decarbonization: A design–framing alignment approach"
+      ],
+      "author": [
+        {
+          "ORCID": "https://orcid.org/0009-0007-6235-1278",
+          "authenticated-orcid": false,
+          "given": "Jia",
+          "family": "Zhang",
+          "sequence": "first",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        },
+        {
+          "given": "Huadong",
+          "family": "Li",
+          "sequence": "additional",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        },
+        {
+          "ORCID": "https://orcid.org/0000-0003-2495-0572",
+          "authenticated-orcid": false,
+          "given": "Shanshan",
+          "family": "Fu",
+          "sequence": "additional",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        },
+        {
+          "given": "Wengang",
+          "family": "Mao",
+          "sequence": "additional",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        }
+      ],
+      "container-title": [
+        "Journal of Environmental Management"
+      ],
+      "published": {
+        "date-parts": [
+          [
+            2026,
+            4
+          ]
+        ]
+      },
+      "published-online": null,
+      "published-print": {
+        "date-parts": [
+          [
+            2026,
+            4
+          ]
+        ]
+      },
+      "volume": "405",
+      "issue": null,
+      "page": "129703",
+      "article-number": "129703",
+      "type": "journal-article"
+    },
+    "publication_display": "2026-04",
+    "authors_display": "Jia Zhang; Huadong Li; Shanshan Fu; Wengang Mao",
+    "venue_display": "Journal of Environmental Management",
+    "title_verified": "Evaluating multi-level policy coherence in maritime decarbonization: A design–framing alignment approach"
+  },
+  {
+    "id": "L06",
+    "doi": "10.1007/s44163-025-00669-z",
+    "title": "Text classification of issues concerning implementation of IMO instruments based on deep bidirectional language representation model",
+    "url": "https://link.springer.com/article/10.1007/s44163-025-00669-z",
+    "reading_level": "出版社摘要及方法概述",
+    "relevance": "IMO文本BERT分类已存在，审计发现不同于谈判主张。",
+    "accessed": "2026-09-20",
+    "status": "published article or scholarly chapter",
+    "crossref": {
+      "DOI": "10.1007/s44163-025-00669-z",
+      "title": [
+        "Text classification of issues concerning implementation of IMO instruments based on deep bidirectional language representation model"
+      ],
+      "author": [
+        {
+          "given": "Min",
+          "family": "Zhu",
+          "sequence": "first",
+          "affiliation": [],
+          "role": [
+            {
+              "role": "author",
+              "vocabulary": "crossref"
+            }
+          ]
+        },
+        {
+          "given": "Linchi",
+          "family": "Qu",
+          "sequence": "additional",
+          "affiliation": [],
+          "role": [
+            {
+              "role": "author",
+              "vocabulary": "crossref"
+            }
+          ]
+        }
+      ],
+      "container-title": [
+        "Discover Artificial Intelligence"
+      ],
+      "published": {
+        "date-parts": [
+          [
+            2025,
+            12,
+            11
+          ]
+        ]
+      },
+      "published-online": {
+        "date-parts": [
+          [
+            2025,
+            12,
+            11
+          ]
+        ]
+      },
+      "published-print": null,
+      "volume": "6",
+      "issue": "1",
+      "page": null,
+      "article-number": "28",
+      "type": "journal-article"
+    },
+    "publication_display": "在线 2025-12-11；卷期 2026",
+    "authors_display": "Min Zhu; Linchi Qu",
+    "venue_display": "Discover Artificial Intelligence",
+    "title_verified": "Text classification of issues concerning implementation of IMO instruments based on deep bidirectional language representation model"
+  },
+  {
+    "id": "L07",
+    "doi": "10.1016/j.ijnaoe.2025.100735",
+    "title": "A RAG-based Q&A system for ship regulations applying domain adaptation",
+    "url": "https://snu.elsevierpure.com/en/publications/a-rag-based-qampa-system-for-ship-regulations-applying-domain-ada/",
+    "reading_level": "作者机构库摘要及出版社方法选段",
+    "relevance": "层级法规检索和领域适配已有先例；简单法规问答不是强创新。",
+    "accessed": "2026-09-20",
+    "status": "published article or scholarly chapter",
+    "crossref": {
+      "DOI": "10.1016/j.ijnaoe.2025.100735",
+      "title": [
+        "A RAG-based Q&amp;A system for ship regulations applying domain adaptation"
+      ],
+      "author": [
+        {
+          "ORCID": "https://orcid.org/0009-0009-0014-6978",
+          "authenticated-orcid": false,
+          "given": "In-Su",
+          "family": "Han",
+          "sequence": "first",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        },
+        {
+          "ORCID": "https://orcid.org/0000-0001-7972-6848",
+          "authenticated-orcid": false,
+          "given": "Myung-Il",
+          "family": "Roh",
+          "sequence": "additional",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        },
+        {
+          "ORCID": "https://orcid.org/0000-0002-0976-2621",
+          "authenticated-orcid": false,
+          "given": "Min-Chul",
+          "family": "Kong",
+          "sequence": "additional",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        }
+      ],
+      "container-title": [
+        "International Journal of Naval Architecture and Ocean Engineering"
+      ],
+      "published": {
+        "date-parts": [
+          [
+            2026
+          ]
+        ]
+      },
+      "published-online": null,
+      "published-print": {
+        "date-parts": [
+          [
+            2026
+          ]
+        ]
+      },
+      "volume": "18",
+      "issue": null,
+      "page": "100735",
+      "article-number": "100735",
+      "type": "journal-article"
+    },
+    "publication_display": "卷期 2026；DOI 含 2025",
+    "authors_display": "In-Su Han; Myung-Il Roh; Min-Chul Kong",
+    "venue_display": "International Journal of Naval Architecture and Ocean Engineering",
+    "title_verified": "A RAG-based Q&A system for ship regulations applying domain adaptation"
+  },
+  {
+    "id": "L08",
+    "doi": "10.1016/j.tranpol.2026.104260",
+    "title": "Large language model enhanced maritime ship registration: The implications in advancing intelligent maritime governance",
+    "url": "https://www.sciencedirect.com/science/article/pii/S0967070X26002702",
+    "reading_level": "出版社索引摘要、引言和贡献",
+    "relevance": "海事治理领域SFT和参数高效微调已发表；需要治理问题驱动。",
+    "accessed": "2026-09-20",
+    "status": "published article or scholarly chapter",
+    "crossref": {
+      "DOI": "10.1016/j.tranpol.2026.104260",
+      "title": [
+        "Large language model enhanced maritime ship registration: The implications in advancing intelligent maritime governance"
+      ],
+      "author": [
+        {
+          "given": "Xiyu",
+          "family": "Zhang",
+          "sequence": "first",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        },
+        {
+          "given": "Langxiong",
+          "family": "Gan",
+          "sequence": "additional",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        },
+        {
+          "given": "Yaqing",
+          "family": "Shu",
+          "sequence": "additional",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        },
+        {
+          "given": "Ran",
+          "family": "Yan",
+          "sequence": "additional",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        },
+        {
+          "given": "Zaili",
+          "family": "Yang",
+          "sequence": "additional",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        }
+      ],
+      "container-title": [
+        "Transport Policy"
+      ],
+      "published": {
+        "date-parts": [
+          [
+            2026,
+            9
+          ]
+        ]
+      },
+      "published-online": null,
+      "published-print": {
+        "date-parts": [
+          [
+            2026,
+            9
+          ]
+        ]
+      },
+      "volume": "186",
+      "issue": null,
+      "page": "104260",
+      "article-number": "104260",
+      "type": "journal-article"
+    },
+    "publication_display": "2026-09",
+    "authors_display": "Xiyu Zhang; Langxiong Gan; Yaqing Shu; Ran Yan; Zaili Yang",
+    "venue_display": "Transport Policy",
+    "title_verified": "Large language model enhanced maritime ship registration: The implications in advancing intelligent maritime governance"
+  },
+  {
+    "id": "L09",
+    "doi": "10.1016/j.tranpol.2025.06.021",
+    "title": "Party politics in transport policy with a large language model",
+    "url": "https://www.sciencedirect.com/science/article/pii/S0967070X2500246X",
+    "reading_level": "出版社索引摘要、方法和讨论选段",
+    "relevance": "LLM交通立法分析已有先例，SHAP不能自动解释为因果。",
+    "accessed": "2026-09-20",
+    "status": "published article or scholarly chapter",
+    "crossref": {
+      "DOI": "10.1016/j.tranpol.2025.06.021",
+      "title": [
+        "Party politics in transport policy with a large language model"
+      ],
+      "author": [
+        {
+          "ORCID": "https://orcid.org/0000-0002-2694-8321",
+          "authenticated-orcid": false,
+          "given": "Hyunsoo",
+          "family": "Yun",
+          "sequence": "first",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        },
+        {
+          "ORCID": "https://orcid.org/0000-0001-5989-4895",
+          "authenticated-orcid": false,
+          "given": "Eun Hak",
+          "family": "Lee",
+          "sequence": "additional",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        }
+      ],
+      "container-title": [
+        "Transport Policy"
+      ],
+      "published": {
+        "date-parts": [
+          [
+            2025,
+            9
+          ]
+        ]
+      },
+      "published-online": null,
+      "published-print": {
+        "date-parts": [
+          [
+            2025,
+            9
+          ]
+        ]
+      },
+      "volume": "171",
+      "issue": null,
+      "page": "487-496",
+      "article-number": null,
+      "type": "journal-article"
+    },
+    "publication_display": "2025-09",
+    "authors_display": "Hyunsoo Yun; Eun Hak Lee",
+    "venue_display": "Transport Policy",
+    "title_verified": "Party politics in transport policy with a large language model"
+  },
+  {
+    "id": "L10",
+    "doi": "10.1371/journal.pone.0335547",
+    "title": "Promises and pitfalls of using LLMs to identify actor stances in political discourse",
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0335547",
+    "reading_level": "出版社摘要、方法、结论与编码手册选段",
+    "relevance": "须定义主体—目标立场并用领域标注验证，不能只比较提示词。",
+    "accessed": "2026-09-20",
+    "status": "published article or scholarly chapter",
+    "crossref": {
+      "DOI": "10.1371/journal.pone.0335547",
+      "title": [
+        "Promises and pitfalls of using LLMs to identify actor stances in political discourse"
+      ],
+      "author": [
+        {
+          "ORCID": "https://orcid.org/0009-0001-6494-4284",
+          "authenticated-orcid": true,
+          "given": "Viviane",
+          "family": "Walker",
+          "sequence": "first",
+          "affiliation": [],
+          "role": [
+            {
+              "role": "author",
+              "vocabulary": "crossref"
+            }
+          ]
+        },
+        {
+          "ORCID": "https://orcid.org/0000-0002-8297-9827",
+          "authenticated-orcid": true,
+          "given": "Mario",
+          "family": "Angst",
+          "sequence": "additional",
+          "affiliation": [],
+          "role": [
+            {
+              "role": "author",
+              "vocabulary": "crossref"
+            }
+          ]
+        }
+      ],
+      "container-title": [
+        "PLOS One"
+      ],
+      "published": {
+        "date-parts": [
+          [
+            2025,
+            11,
+            19
+          ]
+        ]
+      },
+      "published-online": {
+        "date-parts": [
+          [
+            2025,
+            11,
+            19
+          ]
+        ]
+      },
+      "published-print": null,
+      "volume": "20",
+      "issue": "11",
+      "page": "e0335547",
+      "article-number": null,
+      "type": "journal-article"
+    },
+    "publication_display": "2025-11-19",
+    "authors_display": "Viviane Walker; Mario Angst",
+    "venue_display": "PLOS One",
+    "title_verified": "Promises and pitfalls of using LLMs to identify actor stances in political discourse"
+  },
+  {
+    "id": "L11",
+    "doi": "10.1017/pan.2025.10017",
+    "title": "Codebook LLMs: Evaluating LLMs as Measurement Tools for Political Science Concepts",
+    "url": "https://www.cambridge.org/core/journals/political-analysis/article/codebook-llms-evaluating-llms-as-measurement-tools-for-political-science-concepts/7B323A0E47F782F2698A0AE849EA00DE",
+    "reading_level": "出版社摘要、评估阶段及结论",
+    "relevance": "编码手册、行为测试、零样本评估、错误分析和微调路径。",
+    "accessed": "2026-09-20",
+    "status": "published article or scholarly chapter",
+    "crossref": {
+      "DOI": "10.1017/pan.2025.10017",
+      "title": [
+        "Codebook LLMs: Evaluating LLMs as Measurement Tools for Political Science Concepts"
+      ],
+      "author": [
+        {
+          "ORCID": "https://orcid.org/0000-0001-9716-9555",
+          "authenticated-orcid": false,
+          "given": "Andrew",
+          "family": "Halterman",
+          "sequence": "first",
+          "affiliation": [
+            {
+              "id": [
+                {
+                  "id": "https://ror.org/05hs6h993",
+                  "id-type": "ROR",
+                  "asserted-by": "publisher"
+                }
+              ],
+              "name": "Michigan State University"
+            }
+          ],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        },
+        {
+          "given": "Katherine A.",
+          "family": "Keith",
+          "sequence": "additional",
+          "affiliation": [
+            {
+              "id": [
+                {
+                  "id": "https://ror.org/04avkmd49",
+                  "id-type": "ROR",
+                  "asserted-by": "publisher"
+                }
+              ],
+              "name": "Williams College"
+            }
+          ],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        }
+      ],
+      "container-title": [
+        "Political Analysis"
+      ],
+      "published": {
+        "date-parts": [
+          [
+            2025,
+            9,
+            19
+          ]
+        ]
+      },
+      "published-online": {
+        "date-parts": [
+          [
+            2025,
+            9,
+            19
+          ]
+        ]
+      },
+      "published-print": {
+        "date-parts": [
+          [
+            2026,
+            4
+          ]
+        ]
+      },
+      "volume": "34",
+      "issue": "2",
+      "page": "188-204",
+      "article-number": null,
+      "type": "journal-article"
+    },
+    "publication_display": "在线 2025-09-19；卷期 2026",
+    "authors_display": "Andrew Halterman; Katherine A. Keith",
+    "venue_display": "Political Analysis",
+    "title_verified": "Codebook LLMs: Evaluating LLMs as Measurement Tools for Political Science Concepts"
+  },
+  {
+    "id": "L12",
+    "doi": "10.18653/v1/2025.findings-acl.764",
+    "title": "Is External Information Useful for Stance Detection with LLMs?",
+    "url": "https://aclanthology.org/2025.findings-acl.764/",
+    "reading_level": "ACL原论文摘要与书目",
+    "relevance": "外部信息可能使模型偏离待测文本，RAG必须做消融。",
+    "accessed": "2026-09-20",
+    "status": "published article or scholarly chapter",
+    "crossref": {
+      "DOI": "10.18653/v1/2025.findings-acl.764",
+      "title": [
+        "Is External Information Useful for Stance Detection with LLMs?"
+      ],
+      "author": [
+        {
+          "given": "Quang Minh",
+          "family": "Nguyen",
+          "sequence": "first",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        },
+        {
+          "given": "Taegyoon",
+          "family": "Kim",
+          "sequence": "additional",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        }
+      ],
+      "container-title": [
+        "Findings of the Association for Computational Linguistics: ACL 2025"
+      ],
+      "published": {
+        "date-parts": [
+          [
+            2025
+          ]
+        ]
+      },
+      "published-online": null,
+      "published-print": {
+        "date-parts": [
+          [
+            2025
+          ]
+        ]
+      },
+      "volume": null,
+      "issue": null,
+      "page": "14798-14807",
+      "article-number": null,
+      "type": "proceedings-article"
+    },
+    "publication_display": "2025",
+    "authors_display": "Quang Minh Nguyen; Taegyoon Kim",
+    "venue_display": "Findings of the Association for Computational Linguistics: ACL 2025",
+    "title_verified": "Is External Information Useful for Stance Detection with LLMs?"
+  },
+  {
+    "id": "L13",
+    "doi": "10.1080/13501763.2026.2697930",
+    "title": "Measuring stakeholder influence: a comparison of automated and manual approaches",
+    "url": "https://www.tandfonline.com/doi/full/10.1080/13501763.2026.2697930",
+    "reading_level": "出版社索引摘要、方法与讨论选段",
+    "relevance": "人工、文本复用与AI影响测量已有比较；需针对IMO的归属和版本问题改进。",
+    "accessed": "2026-09-20",
+    "status": "published article or scholarly chapter",
+    "crossref": {
+      "DOI": "10.1080/13501763.2026.2697930",
+      "title": [
+        "Measuring stakeholder influence: a comparison of automated and manual approaches"
+      ],
+      "author": [
+        {
+          "ORCID": "https://orcid.org/0000-0002-5059-0251",
+          "authenticated-orcid": false,
+          "given": "Anne Skorkjær",
+          "family": "Binderkrantz",
+          "sequence": "first",
+          "affiliation": [
+            {
+              "name": "Aarhus University",
+              "place": [
+                "Aarhus, Denmark"
+              ]
+            }
+          ],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        },
+        {
+          "given": "Amy Melissa",
+          "family": "McKay",
+          "sequence": "additional",
+          "affiliation": [
+            {
+              "name": "University of Exeter",
+              "place": [
+                "Exeter, UK"
+              ]
+            }
+          ],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        },
+        {
+          "given": "Jonas Alexander",
+          "family": "Whittlestone",
+          "sequence": "additional",
+          "affiliation": [
+            {
+              "name": "University of Southern Denmark",
+              "place": [
+                "Odense, Denmark"
+              ]
+            }
+          ],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        }
+      ],
+      "container-title": [
+        "Journal of European Public Policy"
+      ],
+      "published": {
+        "date-parts": [
+          [
+            2026,
+            7,
+            16
+          ]
+        ]
+      },
+      "published-online": {
+        "date-parts": [
+          [
+            2026,
+            7,
+            16
+          ]
+        ]
+      },
+      "published-print": null,
+      "volume": null,
+      "issue": null,
+      "page": "1-23",
+      "article-number": null,
+      "type": "journal-article"
+    },
+    "publication_display": "2026-07-16",
+    "authors_display": "Anne Skorkjær Binderkrantz; Amy Melissa McKay; Jonas Alexander Whittlestone",
+    "venue_display": "Journal of European Public Policy",
+    "title_verified": "Measuring stakeholder influence: a comparison of automated and manual approaches"
+  },
+  {
+    "id": "L14",
+    "doi": "10.1177/0739456X261442161",
+    "title": "Advancing AI-Assisted Policy-Text Analysis: Revealing the Drive–Adaptation Model of Central–Local Governance",
+    "url": "https://journals.sagepub.com/doi/10.1177/0739456X261442161",
+    "reading_level": "出版社摘要与书目",
+    "relevance": "主动学习与微调的政策测量已有应用，应作为工具而非独立创新。",
+    "accessed": "2026-09-20",
+    "status": "published article or scholarly chapter",
+    "crossref": {
+      "DOI": "10.1177/0739456x261442161",
+      "title": [
+        "Advancing AI-Assisted Policy-Text Analysis: Revealing the Drive–Adaptation Model of Central–Local Governance"
+      ],
+      "author": [
+        {
+          "given": "Ning",
+          "family": "Wu",
+          "sequence": "first",
+          "affiliation": [
+            {
+              "name": "Renmin University of China, Beijing, China"
+            }
+          ],
+          "role": [
+            {
+              "role": "author",
+              "vocabulary": "crossref"
+            }
+          ]
+        },
+        {
+          "given": "Binwei",
+          "family": "Yang",
+          "sequence": "additional",
+          "affiliation": [
+            {
+              "name": "Renmin University of China, Beijing, China"
+            }
+          ],
+          "role": [
+            {
+              "role": "author",
+              "vocabulary": "crossref"
+            }
+          ]
+        },
+        {
+          "ORCID": "https://orcid.org/0000-0001-9616-8059",
+          "authenticated-orcid": false,
+          "given": "Dapeng",
+          "family": "Zhang",
+          "sequence": "additional",
+          "affiliation": [
+            {
+              "name": "Renmin University of China, Beijing, China"
+            }
+          ],
+          "role": [
+            {
+              "role": "author",
+              "vocabulary": "crossref"
+            }
+          ]
+        }
+      ],
+      "container-title": [
+        "Journal of Planning Education and Research"
+      ],
+      "published": {
+        "date-parts": [
+          [
+            2026,
+            5,
+            15
+          ]
+        ]
+      },
+      "published-online": {
+        "date-parts": [
+          [
+            2026,
+            5,
+            15
+          ]
+        ]
+      },
+      "published-print": null,
+      "volume": null,
+      "issue": null,
+      "page": null,
+      "article-number": "0739456X261442161",
+      "type": "journal-article"
+    },
+    "publication_display": "2026-05-15",
+    "authors_display": "Ning Wu; Binwei Yang; Dapeng Zhang",
+    "venue_display": "Journal of Planning Education and Research",
+    "title_verified": "Advancing AI-Assisted Policy-Text Analysis: Revealing the Drive–Adaptation Model of Central–Local Governance"
+  },
+  {
+    "id": "L15",
+    "doi": "10.1007/s41111-026-00351-4",
+    "title": "Beyond the Conventional Pipeline: Large Language Models for Social Science Measurement",
+    "url": "https://link.springer.com/article/10.1007/s41111-026-00351-4",
+    "reading_level": "出版社摘要和正文选段",
+    "relevance": "按测量逻辑选择方法，区分模型潜在概念与研究者操作化定义。",
+    "accessed": "2026-09-20",
+    "status": "published article or scholarly chapter",
+    "crossref": {
+      "DOI": "10.1007/s41111-026-00351-4",
+      "title": [
+        "Beyond the Conventional Pipeline: Large Language Models for Social Science Measurement"
+      ],
+      "author": [
+        {
+          "ORCID": "https://orcid.org/0000-0002-7929-2864",
+          "authenticated-orcid": false,
+          "given": "Le",
+          "family": "Bao",
+          "sequence": "first",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        }
+      ],
+      "container-title": [
+        "Chinese Political Science Review"
+      ],
+      "published": {
+        "date-parts": [
+          [
+            2026,
+            7,
+            30
+          ]
+        ]
+      },
+      "published-online": {
+        "date-parts": [
+          [
+            2026,
+            7,
+            30
+          ]
+        ]
+      },
+      "published-print": null,
+      "volume": null,
+      "issue": null,
+      "page": null,
+      "article-number": null,
+      "type": "journal-article"
+    },
+    "publication_display": "2026-07-30",
+    "authors_display": "Le Bao",
+    "venue_display": "Chinese Political Science Review",
+    "title_verified": "Beyond the Conventional Pipeline: Large Language Models for Social Science Measurement"
+  },
+  {
+    "id": "L16",
+    "doi": "",
+    "title": "Evaluating Large Language Model Performance on International Maritime Dangerous Goods Code Compliance",
+    "url": "https://arxiv.org/abs/2608.21036",
+    "reading_level": "作者预印本摘要，未核验同行评审",
+    "relevance": "2026-08新近DGEval；合规能力随子任务变化，不能套用总体得分。",
+    "accessed": "2026-09-20",
+    "status": "arXiv version consulted; separate peer-reviewed publication status not established",
+    "crossref": null,
+    "arxiv_metadata": {
+      "authors": "Alexander Thomas; Hubert P. H. Shum; Darren Nellis; Manli Zhu; Phatpicha Yochum; William Bartle; Daniel Wrightson",
+      "date": "2026-08-21，v1",
+      "id": "2608.21036"
+    },
+    "publication_display": "2026-08-21，v1",
+    "authors_display": "Alexander Thomas; Hubert P. H. Shum; Darren Nellis; Manli Zhu; Phatpicha Yochum; William Bartle; Daniel Wrightson",
+    "venue_display": "arXiv:2608.21036",
+    "title_verified": "Evaluating Large Language Model Performance on International Maritime Dangerous Goods Code Compliance"
+  },
+  {
+    "id": "L17",
+    "doi": "10.1093/oxfordhb/9780190228217.013.25",
+    "title": "Discourse network analysis: policy debates as dynamic networks",
+    "url": "https://eprints.gla.ac.uk/121525/",
+    "reading_level": "作者机构库摘要与书目",
+    "relevance": "主体—概念—立场的动态网络已有理论与方法基础。",
+    "accessed": "2026-09-20",
+    "status": "published article or scholarly chapter",
+    "crossref": {
+      "DOI": "10.1093/oxfordhb/9780190228217.013.25",
+      "title": [
+        "Discourse Network Analysis"
+      ],
+      "author": [
+        {
+          "given": "Philip",
+          "family": "Leifeld",
+          "sequence": "additional",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        }
+      ],
+      "container-title": [
+        "Oxford Handbooks Online"
+      ],
+      "published": {
+        "date-parts": [
+          [
+            2016,
+            8,
+            3
+          ]
+        ]
+      },
+      "published-online": null,
+      "published-print": {
+        "date-parts": [
+          [
+            2016,
+            8,
+            3
+          ]
+        ]
+      },
+      "volume": null,
+      "issue": null,
+      "page": null,
+      "article-number": null,
+      "type": "edited-book"
+    },
+    "publication_display": "在线 2016-08-03；手册章节 2017",
+    "authors_display": "Philip Leifeld",
+    "venue_display": "Oxford Handbooks Online",
+    "title_verified": "Discourse Network Analysis"
+  },
+  {
+    "id": "L18",
+    "doi": "10.1016/j.tranpol.2020.12.013",
+    "title": "Research topics and trends in the maritime transport: A structural topic model",
+    "url": "https://www.sciencedirect.com/science/article/pii/S0967070X20309501",
+    "reading_level": "出版社摘要和亮点",
+    "relevance": "主题建模航运研究已有先例，研究文献语料与本项目政策文件有区别。",
+    "accessed": "2026-09-20",
+    "status": "published article or scholarly chapter",
+    "crossref": {
+      "DOI": "10.1016/j.tranpol.2020.12.013",
+      "title": [
+        "Research topics and trends in the maritime transport: A structural topic model"
+      ],
+      "author": [
+        {
+          "given": "Xiwen",
+          "family": "Bai",
+          "sequence": "first",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        },
+        {
+          "given": "Xiunian",
+          "family": "Zhang",
+          "sequence": "additional",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        },
+        {
+          "given": "Kevin X.",
+          "family": "Li",
+          "sequence": "additional",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        },
+        {
+          "given": "Yaoming",
+          "family": "Zhou",
+          "sequence": "additional",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        },
+        {
+          "ORCID": "https://orcid.org/0000-0002-9199-6661",
+          "authenticated-orcid": false,
+          "given": "Kum Fai",
+          "family": "Yuen",
+          "sequence": "additional",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        }
+      ],
+      "container-title": [
+        "Transport Policy"
+      ],
+      "published": {
+        "date-parts": [
+          [
+            2021,
+            3
+          ]
+        ]
+      },
+      "published-online": null,
+      "published-print": {
+        "date-parts": [
+          [
+            2021,
+            3
+          ]
+        ]
+      },
+      "volume": "102",
+      "issue": null,
+      "page": "11-24",
+      "article-number": null,
+      "type": "journal-article"
+    },
+    "publication_display": "2021-03",
+    "authors_display": "Xiwen Bai; Xiunian Zhang; Kevin X. Li; Yaoming Zhou; Kum Fai Yuen",
+    "venue_display": "Transport Policy",
+    "title_verified": "Research topics and trends in the maritime transport: A structural topic model"
+  },
+  {
+    "id": "L19",
+    "doi": "",
+    "title": "From Local to Global: A Graph RAG Approach to Query-Focused Summarization",
+    "url": "https://arxiv.org/abs/2404.16130",
+    "reading_level": "作者预印本摘要",
+    "relevance": "GraphRAG适合跨文档综合；不自动提供正确的主张继承或因果边。",
+    "accessed": "2026-09-20",
+    "status": "arXiv version consulted; separate peer-reviewed publication status not established",
+    "crossref": null,
+    "arxiv_metadata": {
+      "authors": "Darren Edge; Ha Trinh; Newman Cheng; Joshua Bradley; Alex Chao; Apurva Mody; Steven Truitt; Dasha Metropolitansky; Robert Osazuwa Ness; Jonathan Larson",
+      "date": "初稿 2024-04-24；v2 2025-02-19",
+      "id": "2404.16130"
+    },
+    "publication_display": "初稿 2024-04-24；v2 2025-02-19",
+    "authors_display": "Darren Edge; Ha Trinh; Newman Cheng; Joshua Bradley; Alex Chao; Apurva Mody; Steven Truitt; Dasha Metropolitansky; Robert Osazuwa Ness; Jonathan Larson",
+    "venue_display": "arXiv:2404.16130",
+    "title_verified": "From Local to Global: A Graph RAG Approach to Query-Focused Summarization"
+  },
+  {
+    "id": "L20",
+    "doi": "",
+    "title": "Modelling Political Coalition Negotiations Using LLM-based Agents",
+    "url": "https://arxiv.org/abs/2402.11712",
+    "reading_level": "作者预印本摘要",
+    "relevance": "谈判代理模拟已有先例，不能以生成的谈判替代真实证据。",
+    "accessed": "2026-09-20",
+    "status": "arXiv version consulted; separate peer-reviewed publication status not established",
+    "crossref": null,
+    "arxiv_metadata": {
+      "authors": "Farhad Moghimifar; Yuan-Fang Li; Robert Thomson; Gholamreza Haffari",
+      "date": "2024-02-18，v1",
+      "id": "2402.11712"
+    },
+    "publication_display": "2024-02-18，v1",
+    "authors_display": "Farhad Moghimifar; Yuan-Fang Li; Robert Thomson; Gholamreza Haffari",
+    "venue_display": "arXiv:2402.11712",
+    "title_verified": "Modelling Political Coalition Negotiations Using LLM-based Agents"
+  },
+  {
+    "id": "L21",
+    "doi": "10.1080/23745118.2025.2569540",
+    "title": "Running a tight ship? From EU coordination to action on emissions in the IMO",
+    "url": "https://www.tandfonline.com/doi/full/10.1080/23745118.2025.2569540",
+    "reading_level": "出版社索引正文选段",
+    "relevance": "协调过程不等同于外部行动，提案署名只覆盖部分协调活动。",
+    "accessed": "2026-09-20",
+    "status": "published article or scholarly chapter",
+    "crossref": {
+      "DOI": "10.1080/23745118.2025.2569540",
+      "title": [
+        "Running a tight ship? From EU coordination to action on emissions in the IMO"
+      ],
+      "author": [
+        {
+          "given": "Jennifer",
+          "family": "Baumann",
+          "sequence": "first",
+          "affiliation": [
+            {
+              "name": "NTNU",
+              "place": [
+                "Trondheim, Norway"
+              ]
+            }
+          ],
+          "role": [
+            {
+              "role": "author",
+              "vocabulary": "crossref"
+            }
+          ]
+        }
+      ],
+      "container-title": [
+        "European Politics and Society"
+      ],
+      "published": {
+        "date-parts": [
+          [
+            2025,
+            10,
+            15
+          ]
+        ]
+      },
+      "published-online": {
+        "date-parts": [
+          [
+            2025,
+            10,
+            15
+          ]
+        ]
+      },
+      "published-print": {
+        "date-parts": [
+          [
+            2026,
+            2,
+            23
+          ]
+        ]
+      },
+      "volume": "27",
+      "issue": "2",
+      "page": "349-368",
+      "article-number": null,
+      "type": "journal-article"
+    },
+    "publication_display": "在线 2025-10-15",
+    "authors_display": "Jennifer Baumann",
+    "venue_display": "European Politics and Society",
+    "title_verified": "Running a tight ship? From EU coordination to action on emissions in the IMO"
+  },
+  {
+    "id": "L22",
+    "doi": "10.1016/j.marpol.2025.106920",
+    "title": "The Core Latin American Members (CLAM) in BBNJ negotiations: A case of rule-making influence from the South on the ocean regime",
+    "url": "https://www.sciencedirect.com/science/article/pii/S0308597X25003367",
+    "reading_level": "出版社摘要和书目",
+    "relevance": "Marine Policy近期海洋谈判联盟与规则制定研究范例。",
+    "accessed": "2026-09-20",
+    "status": "published article or scholarly chapter",
+    "crossref": {
+      "DOI": "10.1016/j.marpol.2025.106920",
+      "title": [
+        "The Core Latin American Members (CLAM) in BBNJ negotiations: A case of rule-making influence from the South on the ocean regime"
+      ],
+      "author": [
+        {
+          "given": "Kevin",
+          "family": "Parthenay",
+          "sequence": "first",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        },
+        {
+          "given": "Carina C. de",
+          "family": "Oliveira",
+          "sequence": "additional",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        },
+        {
+          "given": "Ana Flávia",
+          "family": "Barros-Platiau",
+          "sequence": "additional",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        }
+      ],
+      "container-title": [
+        "Marine Policy"
+      ],
+      "published": {
+        "date-parts": [
+          [
+            2026,
+            1
+          ]
+        ]
+      },
+      "published-online": null,
+      "published-print": {
+        "date-parts": [
+          [
+            2026,
+            1
+          ]
+        ]
+      },
+      "volume": "183",
+      "issue": null,
+      "page": "106920",
+      "article-number": "106920",
+      "type": "journal-article"
+    },
+    "publication_display": "2026-01",
+    "authors_display": "Kevin Parthenay; Carina C. de Oliveira; Ana Flávia Barros-Platiau",
+    "venue_display": "Marine Policy",
+    "title_verified": "The Core Latin American Members (CLAM) in BBNJ negotiations: A case of rule-making influence from the South on the ocean regime"
+  },
+  {
+    "id": "L23",
+    "doi": "10.1016/j.ssci.2026.107116",
+    "title": "Unveiling the influencing factors of maritime accidents through data-driven approaches: leveraging large language model tools",
+    "url": "https://www.sciencedirect.com/science/article/pii/S092575352600007X",
+    "reading_level": "出版社索引摘要和亮点",
+    "relevance": "LLM抽取海事文档变量已普及；本研究应贡献有效测量和制度发现。",
+    "accessed": "2026-09-20",
+    "status": "published article or scholarly chapter",
+    "crossref": {
+      "DOI": "10.1016/j.ssci.2026.107116",
+      "title": [
+        "Unveiling the influencing factors of maritime accidents through data-driven approaches: leveraging large language model tools"
+      ],
+      "author": [
+        {
+          "ORCID": "https://orcid.org/0000-0002-3515-2384",
+          "authenticated-orcid": false,
+          "given": "Meng",
+          "family": "Wei",
+          "sequence": "first",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        },
+        {
+          "given": "Ying",
+          "family": "Cui",
+          "sequence": "additional",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        },
+        {
+          "given": "Jiaguo",
+          "family": "Liu",
+          "sequence": "additional",
+          "affiliation": [],
+          "role": [
+            {
+              "vocabulary": "crossref",
+              "role": "author"
+            }
+          ]
+        }
+      ],
+      "container-title": [
+        "Safety Science"
+      ],
+      "published": {
+        "date-parts": [
+          [
+            2026,
+            5
+          ]
+        ]
+      },
+      "published-online": null,
+      "published-print": {
+        "date-parts": [
+          [
+            2026,
+            5
+          ]
+        ]
+      },
+      "volume": "197",
+      "issue": null,
+      "page": "107116",
+      "article-number": "107116",
+      "type": "journal-article"
+    },
+    "publication_display": "2026-05",
+    "authors_display": "Meng Wei; Ying Cui; Jiaguo Liu",
+    "venue_display": "Safety Science",
+    "title_verified": "Unveiling the influencing factors of maritime accidents through data-driven approaches: leveraging large language model tools"
+  }
+]

@@ -20,6 +20,8 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'Arial Unicode MS']
+plt.rcParams['axes.unicode_minus'] = False
 import numpy as np
 
 from json_read import load_data
@@ -147,7 +149,7 @@ def detect_communities(G):
 
 def draw_network(G, partition, out_path, title='Co-sponsorship Network'):
     """Draw and save network visualization."""
-    fig, ax = plt.subplots(1, 1, figsize=(16, 12))
+    fig, ax = plt.subplots(1, 1, figsize=(18, 14))
     fig.patch.set_facecolor('white')
     ax.set_facecolor('white')
 
@@ -157,8 +159,25 @@ def draw_network(G, partition, out_path, title='Co-sponsorship Network'):
         plt.close(fig)
         return
 
-    # Layout
-    pos = nx.spring_layout(G, k=2.0 / (len(G) ** 0.5 + 1), iterations=80, seed=42, weight='weight')
+    # Build layout graph with hidden inter-community edges to reduce spacing
+    layout_G = G.copy()
+    # Get community representatives (one per community)
+    comm_nodes = defaultdict(list)
+    for n, cid in partition.items():
+        comm_nodes[cid].append(n)
+    # Add weak hidden edges between communities to pull them closer
+    comm_ids = list(comm_nodes.keys())
+    for i in range(len(comm_ids)):
+        for j in range(i + 1, len(comm_ids)):
+            # Pick the highest-degree node from each community as anchor
+            a = max(comm_nodes[comm_ids[i]], key=lambda x: G.degree(x))
+            b = max(comm_nodes[comm_ids[j]], key=lambda x: G.degree(x))
+            if not layout_G.has_edge(a, b):
+                layout_G.add_edge(a, b, weight=0.1, _hidden=True)
+
+    # Layout — spring_layout on augmented graph for balanced spacing
+    k_val = 1.8 / (len(layout_G) ** 0.5)
+    pos = nx.spring_layout(layout_G, k=k_val, iterations=200, seed=42, weight=None, scale=1.0)
 
     # Community colors
     n_comm = max(partition.values()) + 1 if partition else 1
@@ -167,13 +186,13 @@ def draw_network(G, partition, out_path, title='Co-sponsorship Network'):
 
     # Node sizes proportional to doc count
     sizes = np.array([G.nodes[n].get('doc_count', 1) for n in G.nodes()], dtype=float)
-    sizes = 200 + 1500 * (sizes / (sizes.max() + 1e-9))
+    sizes = 400 + 2000 * (sizes / (sizes.max() + 1e-9))
 
-    # Edge widths proportional to weight
+    # Edge widths proportional to weight (wider range for visibility)
     edge_weights = [G[u][v]['weight'] for u, v in G.edges()]
     max_w = max(edge_weights) if edge_weights else 1
-    edge_widths = [0.5 + 4.0 * (w / max_w) for w in edge_weights]
-    edge_alphas = [0.2 + 0.6 * (w / max_w) for w in edge_weights]
+    edge_widths = [0.8 + 5.0 * (w / max_w) for w in edge_weights]
+    edge_alphas = [0.3 + 0.6 * (w / max_w) for w in edge_weights]
 
     # Draw edges
     for (u, v), width, alpha in zip(G.edges(), edge_widths, edge_alphas):
@@ -185,27 +204,44 @@ def draw_network(G, partition, out_path, title='Co-sponsorship Network'):
     nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=sizes,
                            edgecolors='#333', linewidths=0.8, alpha=0.9, ax=ax)
 
-    # Labels
-    nx.draw_networkx_labels(G, pos, font_size=8, font_weight='bold', ax=ax)
+    # Labels — use adjustText for anti-overlap if available
+    try:
+        from adjustText import adjust_text as _adjust_text
+        texts = []
+        for n, (x, y) in pos.items():
+            texts.append(ax.text(x, y, n, fontsize=18, fontweight='bold', ha='center', va='center'))
+        _adjust_text(
+            texts, ax=ax,
+            add_objects=[],
+            expand_points=(2.0, 2.0),
+            expand_text=(1.5, 1.5),
+            force_text=(0.5, 1.0),
+            force_points=(0.2, 0.5),
+            arrowprops=dict(arrowstyle='-', color='gray', lw=0.5, alpha=0.4),
+            lim=2000
+        )
+    except ImportError:
+        nx.draw_networkx_labels(G, pos, font_size=8, font_weight='bold', ax=ax)
 
     # Edge weight labels (only for strong edges)
     strong_edges = {(u, v): d['weight'] for u, v, d in G.edges(data=True) if d['weight'] >= max_w * 0.3}
     if strong_edges:
-        nx.draw_networkx_edge_labels(G, pos, edge_labels=strong_edges, font_size=7, font_color='#555', ax=ax)
+        nx.draw_networkx_edge_labels(G, pos, edge_labels=strong_edges, font_size=16, font_color='#555', ax=ax)
 
-    # Legend for communities
+    # Legend for communities — place below the plot
     comm_labels = defaultdict(list)
     for n, cid in partition.items():
         comm_labels[cid].append(n)
     patches = []
     for cid in sorted(comm_labels.keys()):
         members = sorted(comm_labels[cid])
-        label = f"Group {cid + 1}: {', '.join(members[:4])}" + ('...' if len(members) > 4 else '')
+        label = f"社群 {cid + 1}: {', '.join(members[:4])}" + ('...' if len(members) > 4 else '')
         patches.append(mpatches.Patch(color=cmap(cid), label=label))
     if patches:
-        ax.legend(handles=patches, loc='lower left', fontsize=7, framealpha=0.8)
+        ax.legend(handles=patches, loc='upper center', bbox_to_anchor=(0.5, -0.02),
+                  ncol=min(len(patches), 3), fontsize=16, framealpha=0.8)
 
-    ax.set_title(title, fontsize=14, fontweight='bold', pad=15)
+    ax.set_title(title, fontsize=24, fontweight='bold', pad=20)
     ax.axis('off')
 
     fig.savefig(out_path, dpi=150, bbox_inches='tight')
@@ -256,6 +292,86 @@ def save_stats(G, partition, docs_per_country, title_per_country, edges, out_pat
     print(f'  Saved: {out_path}')
 
 
+def save_csv_and_txt(G, partition, docs_per_country, edges, out_folder, prefix, meetings):
+    """Save CSV tables and interpretation TXT."""
+    cn_name = COMMITTEE_CN.get(prefix, prefix)
+
+    # 1. Top pairs CSV
+    pairs_rows = []
+    for (a, b), w in edges.most_common(30):
+        if a in G and b in G:
+            pairs_rows.append({'pair_a': a, 'pair_b': b, 'weight': w})
+    if pairs_rows:
+        pairs_df = pd.DataFrame(pairs_rows)
+        pairs_path = os.path.join(out_folder, f'alliance_top_pairs_{prefix}.csv')
+        pairs_df.to_csv(pairs_path, index=False, encoding='utf-8-sig')
+        print(f'  Saved: {pairs_path}')
+
+    # 2. Country stats CSV
+    stats_rows = []
+    for n in sorted(G.nodes(), key=lambda x: docs_per_country.get(x, 0), reverse=True):
+        degree = G.degree(n, weight='weight')
+        stats_rows.append({
+            'country': n,
+            'total_docs': docs_per_country.get(n, 0),
+            'weighted_degree': degree,
+            'community': partition.get(n, -1) + 1,
+        })
+    if stats_rows:
+        stats_df = pd.DataFrame(stats_rows)
+        stats_path = os.path.join(out_folder, f'alliance_country_stats_{prefix}.csv')
+        stats_df.to_csv(stats_path, index=False, encoding='utf-8-sig')
+        print(f'  Saved: {stats_path}')
+
+    # 3. Interpretation TXT
+    lines = [f"=== {cn_name} 共同提案联盟网络分析结果 ===\n"]
+
+    n_communities = len(set(partition.values())) if partition else 0
+    total_cosponsor = sum(d['weight'] for _, _, d in G.edges(data=True))
+    lines.append("一、基本统计")
+    meeting_range = f"{meetings[0]}—{meetings[-1]}" if len(meetings) > 1 else meetings[0] if meetings else "N/A"
+    lines.append(f"本次分析涵盖 {meeting_range} 共 {len(meetings)} 届会议，{len(G)} 个最活跃国家/组织。"
+                 f"共识别出 {n_communities} 个合作社群，总计 {int(total_cosponsor)} 次联合提案关系。\n")
+
+    lines.append("二、核心合作关系")
+    if pairs_rows:
+        top5 = pairs_rows[:5]
+        for p in top5:
+            lines.append(f"  {p['pair_a']} — {p['pair_b']}（{p['weight']} 次联合提案）")
+    else:
+        lines.append("  未发现显著的联合提案关系。")
+    lines.append("")
+
+    lines.append("三、社群结构")
+    comm_members = defaultdict(list)
+    for n, cid in partition.items():
+        comm_members[cid].append(n)
+    for cid in sorted(comm_members.keys()):
+        members = sorted(comm_members[cid])
+        lines.append(f"  社群 {cid+1}（{len(members)} 个成员）: {', '.join(members[:8])}"
+                     + ('...' if len(members) > 8 else ''))
+    lines.append("")
+
+    lines.append("四、中国参与情况")
+    china_names = [n for n in G.nodes() if 'China' in n or 'china' in n.lower()]
+    if china_names:
+        for cn in china_names:
+            cdocs = docs_per_country.get(cn, 0)
+            cdeg = G.degree(cn, weight='weight')
+            partners = sorted(G[cn].items(), key=lambda x: x[1].get('weight', 0), reverse=True)
+            top_partners = [f"{p}({d.get('weight', 0)})" for p, d in partners[:5]]
+            lines.append(f"  {cn} 共提交 {cdocs} 篇提案，加权度为 {cdeg}。")
+            if top_partners:
+                lines.append(f"  主要合作伙伴: {', '.join(top_partners)}")
+    else:
+        lines.append("  本次分析范围内未找到中国相关数据。")
+
+    txt_path = os.path.join(out_folder, f'alliance_interpretation_{prefix}.txt')
+    with open(txt_path, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(lines))
+    print(f'  Saved: {txt_path}')
+
+
 # ───────────────────── per-topic networks ─────────────────────
 
 TOPIC_KEYWORDS = {
@@ -264,6 +380,22 @@ TOPIC_KEYWORDS = {
     'ENERGY_EFFICIENCY': 'energy efficiency',
     'AIR_POLLUTION': 'air pollution',
     'MARINE_PLASTIC': 'plastic',
+}
+
+TOPIC_CN = {
+    'GHG': '温室气体减排',
+    'BALLAST_WATER': '压载水管理',
+    'ENERGY_EFFICIENCY': '能效',
+    'AIR_POLLUTION': '大气污染',
+    'MARINE_PLASTIC': '海洋塑料',
+}
+
+COMMITTEE_CN = {
+    'MEPC': '海洋环境保护委员会 (MEPC)',
+    'MSC': '海上安全委员会 (MSC)',
+    'CCC': '货物运输分委会 (CCC)',
+    'SSE': '船舶系统与设备分委会 (SSE)',
+    'ISWG-GHG': '温室气体减排工作组 (ISWG-GHG)',
 }
 
 
@@ -296,10 +428,12 @@ def main():
     partition = detect_communities(G)
 
     prefix = os.path.basename(base).upper()
+    cn_name = COMMITTEE_CN.get(prefix, prefix)
     draw_network(G, partition, os.path.join(out_folder, f'alliance_network_{prefix}.png'),
-                 title=f'{prefix} Co-sponsorship Network (MEPC sessions)')
+                 title=f'{cn_name} 共同提案联盟网络')
     save_stats(G, partition, docs_per_country, title_per_country, edges,
                os.path.join(out_folder, f'alliance_stats_{prefix}.json'))
+    save_csv_and_txt(G, partition, docs_per_country, edges, out_folder, prefix, meetings)
 
     # Per-topic networks
     if args.per_topic:
@@ -312,8 +446,9 @@ def main():
                 print(f'    Skipped (not enough nodes)')
                 continue
             t_part = detect_communities(t_G)
+            topic_cn = TOPIC_CN.get(label, label)
             draw_network(t_G, t_part, os.path.join(out_folder, f'alliance_network_{prefix}_{label}.png'),
-                         title=f'{prefix} Co-sponsorship: {label}')
+                         title=f'{cn_name} 共同提案联盟网络 — {topic_cn}')
 
     print('\nDone!')
 

@@ -14,10 +14,12 @@ matplotlib
 seaborn
 adjustText
 plotly
+wordcloud
 
 # Natural Language Processing (NLP)
 nltk
 gensim
+spacy
 
 # BERTopic (Transformer-based Topic Modeling)
 bertopic

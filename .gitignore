@@ -1,27 +1,41 @@
-# Visual Studio Code
+# Editor and local assistant settings
 .vscode/*
 !.vscode/settings.json
 !.vscode/launch.json
 !.vscode/extensions.json
 !.vscode/tasks.json
+.claude/settings.local.json
 
-# Python
+# Python bytecode and tool caches
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
-# Large output files
-*.html
+# Local Python environments
+.conda/
+imo/
+.venv/
+venv/
+env/
 
+# Downloaded data and generated analysis results
 data/
 output/
 log/
+paper/generated_report/
 
-# Legacy/temp
-cmp.py
+# Local archives and temporary files
+archive/
+data.zip
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
 nul
+cmp.py
 temp_for_cleaning/
-
-# Virtual environment
-imo/
